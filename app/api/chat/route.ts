@@ -4,7 +4,7 @@ import { aiModel, MEDICAL_AGENT_PROMPT } from '@/lib/ai'
 import { BloodWorkTool } from '@/lib/tools/blood-work'
 import { GeneticTool } from '@/lib/tools/genetics'
 import { BloodWorkQuerySchema, GeneticQuerySchema, MedicalSearchSchema } from '@/types'
-import { MedicalSearchTool } from '@/lib/tools/medical-text-search'
+import { MedicalSearchTool } from '@/lib/tools/medical-search-tool'
 
 export async function POST(req: Request) {
   try {

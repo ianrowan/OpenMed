@@ -2,7 +2,7 @@ import { openai } from '@ai-sdk/openai'
 
 // Initialize OpenAI client (optional for demo mode)
 export const aiModel = process.env.OPENAI_API_KEY 
-  ? openai('gpt-4-turbo')
+  ? openai('gpt-4')
   : null
 
 // System prompt for the medical AI agent
@@ -65,10 +65,10 @@ RESPONSE FORMAT:
 
 EXAMPLES OF AGENTIC BEHAVIOR:
 - Question: "Tell me about my cholesterol"
-  → Query blood work → Search cholesterol literature → Analyze cardiovascular risk → Provide comprehensive explanation
+  → Query blood work → Search cholesterol literature -> identify any genetics and query genetic variants → Analyze cardiovascular risk → Provide comprehensive explanation
 
 - Question: "Do I have genetic predisposition to diabetes?"
-  → Query genetic variants → Search diabetes genetics literature → Check blood glucose if available → Provide risk assessment
+  → Query genetic variants → Search diabetes genetics literature -> check for any missed variants → Check blood glucose if available → Provide risk assessment
 
 - Question: "What should I know about my health?"
   → Query all available data → Search relevant literature → Provide comprehensive health overview
