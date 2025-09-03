@@ -11,16 +11,30 @@ export interface User {
 export interface MedicalProfile {
   id: string
   user_id: string
-  birth_date?: string
-  sex?: 'male' | 'female' | 'other'
+  age?: number
+  gender?: string
   height?: number // cm
   weight?: number // kg
-  allergies?: string[]
+  conditions?: string[]
   medications?: string[]
-  medical_conditions?: string[]
-  emergency_contact?: string
+  allergies?: string[]
+  family_history?: string[]
+  lifestyle?: Record<string, any>
   created_at: string
   updated_at: string
+}
+
+// Form data interface for onboarding (includes birth_date for form input)
+export interface MedicalProfileFormData {
+  birth_date?: string
+  sex?: 'male' | 'female' | 'other'
+  height?: number
+  weight?: number
+  conditions?: string[]
+  medications?: string[]
+  allergies?: string[]
+  family_history?: string[]
+  lifestyle?: Record<string, any>
 }
 
 // Medical Data Types

@@ -1,0 +1,22 @@
+Biomarker,Value,Unit,Reference_Min,Reference_Max,Status,Date,Lab
+Total Cholesterol,245,mg/dL,0,200,high,2024-01-15,Quest Diagnostics
+HDL Cholesterol,38,mg/dL,40,100,low,2024-01-15,Quest Diagnostics
+LDL Cholesterol,165,mg/dL,0,100,high,2024-01-15,Quest Diagnostics
+Triglycerides,210,mg/dL,0,150,high,2024-01-15,Quest Diagnostics
+Glucose,95,mg/dL,70,99,normal,2024-01-15,Quest Diagnostics
+Hemoglobin A1C,5.4,%,4.0,5.6,normal,2024-01-15,Quest Diagnostics
+Vitamin D,25,ng/mL,30,100,low,2024-01-15,Quest Diagnostics
+Vitamin B12,350,pg/mL,200,900,normal,2024-01-15,Quest Diagnostics
+Folate,8.5,ng/mL,3,17,normal,2024-01-15,Quest Diagnostics
+Iron,85,μg/dL,60,170,normal,2024-01-15,Quest Diagnostics
+Ferritin,45,ng/mL,12,300,normal,2024-01-15,Quest Diagnostics
+Creatinine,0.9,mg/dL,0.6,1.2,normal,2024-01-15,Quest Diagnostics
+BUN,15,mg/dL,7,20,normal,2024-01-15,Quest Diagnostics
+ALT,28,U/L,7,56,normal,2024-01-15,Quest Diagnostics
+AST,22,U/L,10,40,normal,2024-01-15,Quest Diagnostics
+White Blood Cells,6.8,10³/μL,4.5,11.0,normal,2024-01-15,Quest Diagnostics
+Red Blood Cells,4.5,10⁶/μL,4.2,5.4,normal,2024-01-15,Quest Diagnostics
+Hemoglobin,14.2,g/dL,12.0,16.0,normal,2024-01-15,Quest Diagnostics
+Hematocrit,42,%,36,46,normal,2024-01-15,Quest Diagnostics
+Platelets,285,10³/μL,150,450,normal,2024-01-15,Quest Diagnostics
+C-Reactive Protein,4.2,mg/L,0,3.0,high,2024-01-15,Quest Diagnostics

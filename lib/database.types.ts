@@ -25,42 +25,45 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          birth_date: string | null
-          sex: string | null
+          age: number | null
+          gender: string | null
           height: number | null
           weight: number | null
-          allergies: string[] | null
+          conditions: string[] | null
           medications: string[] | null
-          medical_conditions: string[] | null
-          emergency_contact: string | null
+          allergies: string[] | null
+          family_history: string[] | null
+          lifestyle: any | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           user_id: string
-          birth_date?: string | null
-          sex?: string | null
+          age?: number | null
+          gender?: string | null
           height?: number | null
           weight?: number | null
-          allergies?: string[] | null
+          conditions?: string[] | null
           medications?: string[] | null
-          medical_conditions?: string[] | null
-          emergency_contact?: string | null
+          allergies?: string[] | null
+          family_history?: string[] | null
+          lifestyle?: any | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           user_id?: string
-          birth_date?: string | null
-          sex?: string | null
+          age?: number | null
+          gender?: string | null
           height?: number | null
           weight?: number | null
-          allergies?: string[] | null
+          conditions?: string[] | null
           medications?: string[] | null
-          medical_conditions?: string[] | null
-          emergency_contact?: string | null
+          allergies?: string[] | null
+          family_history?: string[] | null
+          lifestyle?: any | null
           created_at?: string
           updated_at?: string
         }
