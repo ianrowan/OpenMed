@@ -68,6 +68,67 @@ export interface Database {
           updated_at?: string
         }
       }
+      blood_test_results: {
+        Row: {
+          id: string
+          user_id: string
+          test_date: string
+          lab_name: string | null
+          biomarkers: any
+          uploaded_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          test_date: string
+          lab_name?: string | null
+          biomarkers: any
+          uploaded_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          test_date?: string
+          lab_name?: string | null
+          biomarkers?: any
+          uploaded_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      genetic_data: {
+        Row: {
+          id: string
+          user_id: string
+          source: string
+          snps: any
+          uploaded_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          source: string
+          snps: any
+          uploaded_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          source?: string
+          snps?: any
+          uploaded_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
       medical_data: {
         Row: {
           id: string

@@ -2,8 +2,16 @@ import { openai } from '@ai-sdk/openai'
 
 // Initialize OpenAI client (optional for demo mode)
 export const aiModel = process.env.OPENAI_API_KEY 
-  ? openai('gpt-4')
+  ? openai('gpt-4-turbo')
   : null
+
+// Function to get AI model based on preference
+export const getAIModel = (modelName?: string) => {
+  if (!process.env.OPENAI_API_KEY) return null
+  
+  const model = modelName || 'gpt-4-turbo'
+  return openai(model)
+}
 
 // System prompt for the medical AI agent
 export const MEDICAL_AGENT_PROMPT = `You are OpenMed AI, an advanced agentic medical data analysis assistant. Your role is to help users understand their health data through comprehensive multi-step analysis.
@@ -77,21 +85,92 @@ Remember: Be thorough, show your analytical process through tool usage, and alwa
 
 // Configuration for different AI models
 export const MODEL_CONFIGS = {
+  'gpt-5': {
+    maxTokens: 16384,
+    temperature: 0.7,
+    topP: 0.9,
+    description: 'Latest GPT-5 model with enhanced reasoning capabilities',
+  },
+  'gpt-4.1': {
+    maxTokens: 12288,
+    temperature: 0.7,
+    topP: 0.9,
+    description: 'GPT-4.1 with improved performance and accuracy',
+  },
+  'gpt-5-mini': {
+    maxTokens: 8192,
+    temperature: 0.7,
+    topP: 0.9,
+    description: 'Faster, more efficient GPT-5 variant',
+  },
   'gpt-4-turbo': {
     maxTokens: 4096,
     temperature: 0.7,
     topP: 0.9,
+    description: 'GPT-4 Turbo with enhanced speed and capabilities',
   },
   'gpt-4': {
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
+    description: 'Standard GPT-4 model',
   },
   'gpt-3.5-turbo': {
     maxTokens: 4096,
     temperature: 0.7,
     topP: 0.9,
+    description: 'Fast and efficient GPT-3.5 Turbo',
   },
 } as const
 
 export type ModelType = keyof typeof MODEL_CONFIGS
+
+// Helper function to get model configuration
+export const getModelConfig = (modelName: ModelType) => {
+  return MODEL_CONFIGS[modelName]
+}
+
+// List of available models for UI selection
+export const AVAILABLE_MODELS: Array<{
+  id: ModelType
+  name: string
+  description: string
+  tier: 'premium' | 'standard' | 'basic'
+}> = [
+  {
+    id: 'gpt-5',
+    name: 'GPT-5',
+    description: 'Most advanced model with superior reasoning',
+    tier: 'premium'
+  },
+  {
+    id: 'gpt-4.1',
+    name: 'GPT-4.1',
+    description: 'Enhanced GPT-4 with improved accuracy',
+    tier: 'premium'
+  },
+  {
+    id: 'gpt-5-mini',
+    name: 'GPT-5 Mini',
+    description: 'Faster GPT-5 variant, great balance of speed and quality',
+    tier: 'standard'
+  },
+  {
+    id: 'gpt-4-turbo',
+    name: 'GPT-4 Turbo',
+    description: 'Fast and capable, good for most tasks',
+    tier: 'standard'
+  },
+  {
+    id: 'gpt-4',
+    name: 'GPT-4',
+    description: 'Reliable and powerful general-purpose model',
+    tier: 'standard'
+  },
+  {
+    id: 'gpt-3.5-turbo',
+    name: 'GPT-3.5 Turbo',
+    description: 'Quick and efficient for basic tasks',
+    tier: 'basic'
+  },
+]

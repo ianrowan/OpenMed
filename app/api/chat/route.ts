@@ -1,17 +1,21 @@
 import { streamText, tool } from 'ai'
 import { z } from 'zod'
-import { aiModel, MEDICAL_AGENT_PROMPT } from '@/lib/ai'
+import { aiModel, MEDICAL_AGENT_PROMPT, getAIModel, ModelType } from '@/lib/ai'
 import { BloodWorkTool } from '@/lib/tools/blood-work'
 import { GeneticTool } from '@/lib/tools/genetics'
 import { BloodWorkQuerySchema, GeneticQuerySchema, MedicalSearchSchema } from '@/types'
 import { MedicalSearchTool } from '@/lib/tools/medical-search-tool'
+import { createServerComponentClient } from '@/lib/supabase'
 
 export async function POST(req: Request) {
   try {
-    const { messages } = await req.json()
+    const { messages, model } = await req.json()
+
+    // Get the AI model based on the request or use default
+    const selectedModel = getAIModel(model) || aiModel
 
     // If no AI model is configured, return a demo response
-    if (!aiModel) {
+    if (!selectedModel) {
       return new Response(
         JSON.stringify({
           role: 'assistant',
@@ -23,13 +27,16 @@ export async function POST(req: Request) {
       )
     }
 
-    // Initialize tools
-    const bloodWorkTool = new BloodWorkTool()
-    const geneticTool = new GeneticTool()
+    // Create Supabase client with auth session
+    const supabase = await createServerComponentClient()
+
+    // Initialize tools with the authenticated Supabase client
+    const bloodWorkTool = new BloodWorkTool(supabase)
+    const geneticTool = new GeneticTool(supabase)
     const medicalSearchTool = new MedicalSearchTool()
 
     const result = streamText({
-      model: aiModel,
+      model: selectedModel,
       system: MEDICAL_AGENT_PROMPT,
       messages,
       maxSteps: 20, // Allow multiple tool execution steps

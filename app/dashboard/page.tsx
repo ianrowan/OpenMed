@@ -4,6 +4,8 @@ import { useAuth } from '@/lib/auth/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { DeleteDataManager } from '@/components/dashboard/delete-data-manager'
+import { Toaster } from '@/components/ui/toaster'
 import { User, Settings, Upload, MessageSquare, Activity, Calendar, Ruler, Weight } from 'lucide-react'
 import Link from 'next/link'
 
@@ -16,19 +18,6 @@ export default function DashboardPage() {
 
   const getInitials = (email: string) => {
     return email.charAt(0).toUpperCase()
-  }
-
-  const calculateAge = (birthDate: string) => {
-    const today = new Date()
-    const birth = new Date(birthDate)
-    let age = today.getFullYear() - birth.getFullYear()
-    const monthDiff = today.getMonth() - birth.getMonth()
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--
-    }
-    
-    return age
   }
 
   const calculateBMI = (height: number, weight: number) => {
@@ -161,23 +150,23 @@ export default function DashboardPage() {
                       <Badge variant="secondary">Complete</Badge>
                     </div>
                     
-                    {profile.birth_date && (
+                    {profile.age && (
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-500 flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
                           Age
                         </span>
                         <span className="text-sm font-medium">
-                          {calculateAge(profile.birth_date)} years
+                          {profile.age} years
                         </span>
                       </div>
                     )}
 
-                    {profile.sex && (
+                    {profile.gender && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Sex</span>
+                        <span className="text-sm text-gray-500">Gender</span>
                         <span className="text-sm font-medium capitalize">
-                          {profile.sex}
+                          {profile.gender}
                         </span>
                       </div>
                     )}
@@ -239,31 +228,12 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Stats</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Data Files</span>
-                    <span className="text-sm font-medium">0</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Chat Sessions</span>
-                    <span className="text-sm font-medium">0</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Last Activity</span>
-                    <span className="text-sm font-medium">Today</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Delete Data Manager */}
+            <DeleteDataManager />
           </div>
         </div>
       </main>
+      <Toaster />
     </div>
   )
 }

@@ -1,28 +1,35 @@
-import { supabase } from '@/lib/supabase'
 import { GeneticData, SNP, ToolResult } from '@/types'
 import { GeneticQuerySchema } from '@/types'
 import { z } from 'zod'
+import type { SupabaseClient } from '@/lib/supabase'
 
 export class GeneticTool {
+  private supabase: SupabaseClient | null
+
+  constructor(supabaseClient?: SupabaseClient | null) {
+    this.supabase = supabaseClient || null
+  }
+
   async execute(params: z.infer<typeof GeneticQuerySchema>): Promise<ToolResult> {
+    console.log('Executing GeneticTool with params:', params)
     try {
       // If Supabase is not configured, return mock data for demo
-      if (!supabase) {
+      if (!this.supabase) {
         return this.getMockGeneticData(params)
       }
 
       const userId = await this.getCurrentUserId()
       
-      const { data, error } = await supabase
-        .from('medical_data')
+      console.log(`Querying genetic data for user ${userId}...`)
+      const { data: geneticResults, error } = await this.supabase
+        .from('genetic_data')
         .select('*')
         .eq('user_id', userId)
-        .eq('data_type', 'genetics')
         .order('uploaded_at', { ascending: false })
         .limit(1)
-
+      console.log(geneticResults)
       if (error) throw error
-      if (!data || data.length === 0) {
+      if (!geneticResults || geneticResults.length === 0) {
         return {
           data: null,
           summary: "No genetic data found. Please upload your 23andMe or similar genetic test results.",
@@ -30,14 +37,61 @@ export class GeneticTool {
         }
       }
 
-      const geneticData: GeneticData = data[0].data
+      // Access the data from the genetic_data table and properly type it
+      type RawGeneticRecord = {
+        id: string;
+        user_id: string;
+        source: string;
+        snps: {
+          variants: any[];
+          metadata: any;
+          riskAssessment: any;
+          uploadInfo: any;
+        };
+        uploaded_at: string;
+        created_at: string;
+        updated_at: string;
+      };
+      
+      const rawData = geneticResults[0] as unknown as RawGeneticRecord;
+      console.log('Raw genetic data structure:', JSON.stringify(rawData, null, 2));
+      
+      // Extract the variants from the nested structure that matches the upload route format
+      const uploadVariants = rawData.snps?.variants || [];
+      console.log(`Found ${uploadVariants.length} variants in upload data`);
+      
+      // Transform variants from upload format to our internal SNP format
+      const variants = uploadVariants.map((variant: any) => ({
+        rsid: variant.rsid,
+        chromosome: variant.chromosome,
+        position: variant.position,
+        genotype: variant.genotype,
+        gene: variant.annotation?.geneName, // Transform geneName to gene
+        annotation: variant.annotation ? {
+          phenotype: variant.annotation.phenotype,
+          clinical_significance: variant.annotation.clinicalSignificance, // Transform to snake_case
+          disease_association: variant.annotation.phenotype, // Use phenotype as disease association for now
+          drug_response: variant.annotation.drugResponse,
+          risk_level: this.mapRiskLevel(variant.annotation.clinicalSignificance)
+        } : undefined
+      }));
+      
+      const geneticData: GeneticData = {
+        id: rawData.id,
+        user_id: rawData.user_id,
+        source: rawData.source as '23andme' | 'ancestry' | 'other',
+        snps: variants,
+        uploaded_at: rawData.uploaded_at
+      }
       let filteredSNPs = geneticData.snps
+      console.log(`Initial SNPs count: ${filteredSNPs.length}`);
 
-      // Apply filters
+      // Apply filters (now using transformed SNP format)
       if (params.rsids) {
         filteredSNPs = filteredSNPs.filter(snp => 
           params.rsids!.includes(snp.rsid)
         )
+        console.log(`After rsids filter: ${filteredSNPs.length}`);
       }
 
       if (params.genes) {
@@ -46,12 +100,14 @@ export class GeneticTool {
             snp.gene!.toLowerCase().includes(gene.toLowerCase())
           )
         )
+        console.log(`After genes filter: ${filteredSNPs.length}`);
       }
 
-      if (params.phenotype) {
+      if (params.phenotype && params.phenotype.toLowerCase() !== 'all') {
         filteredSNPs = filteredSNPs.filter(snp => 
           snp.annotation?.phenotype?.toLowerCase().includes(params.phenotype!.toLowerCase())
         )
+        console.log(`After phenotype filter: ${filteredSNPs.length}`);
       }
 
       if (params.clinical_significance) {
@@ -59,11 +115,13 @@ export class GeneticTool {
           snp.annotation?.clinical_significance && 
           params.clinical_significance!.includes(snp.annotation.clinical_significance)
         )
+        console.log(`After clinical_significance filter: ${filteredSNPs.length}`);
       }
 
+      console.log(`Final filtered SNPs count: ${filteredSNPs.length}`);
       const summary = this.generateGeneticSummary(filteredSNPs, params)
       const visualization = this.createGeneticVisualization(filteredSNPs)
-
+      console.log(summary)
       return {
         data: {
           ...geneticData,
@@ -75,6 +133,23 @@ export class GeneticTool {
       }
     } catch (error) {
       throw new Error(`Genetic data query failed: ${error}`)
+    }
+  }
+
+  private mapRiskLevel(clinicalSignificance?: string): 'low' | 'moderate' | 'high' {
+    if (!clinicalSignificance) return 'low';
+    
+    switch (clinicalSignificance.toLowerCase()) {
+      case 'pathogenic':
+      case 'likely_pathogenic':
+        return 'high';
+      case 'uncertain':
+      case 'uncertain_significance':
+        return 'moderate';
+      case 'likely_benign':
+      case 'benign':
+      default:
+        return 'low';
     }
   }
 
@@ -123,12 +198,37 @@ export class GeneticTool {
   }
 
   private async getCurrentUserId(): Promise<string> {
-    if (!supabase) {
+    if (!this.supabase) {
       return 'demo-user'
     }
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('User not authenticated')
-    return user.id
+    
+    try {
+      console.log('Getting user authentication...')
+      
+      // Add a timeout to prevent hanging
+      const authPromise = this.supabase.auth.getUser()
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Auth timeout')), 5000)
+      )
+      
+      const { data: { user }, error } = await Promise.race([authPromise, timeoutPromise]) as any
+      
+      if (error) {
+        console.log('Auth error, using demo user:', error)
+        return 'demo-user'
+      }
+      
+      if (!user) {
+        console.log('No user found, using demo user')
+        return 'demo-user'
+      }
+      
+      console.log('User authenticated:', user.id)
+      return user.id
+    } catch (error) {
+      console.log('Auth failed, using demo user:', error)
+      return 'demo-user'
+    }
   }
 
   private generateGeneticSummary(snps: SNP[], params: z.infer<typeof GeneticQuerySchema>): string {

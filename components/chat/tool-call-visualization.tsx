@@ -130,7 +130,9 @@ export function ToolCallVisualization({ toolCall }: ToolCallVisualizationProps) 
                   )
                 )}
                 {toolCall.toolName === 'queryGenetics' && (
-                  toolCall.result.data?.genetic_data ? (
+                  toolCall.result.data && !toolCall.result.data.genetic_data ? (
+                    <GeneticVisualization data={toolCall.result.data} />
+                  ) : toolCall.result.data?.genetic_data ? (
                     <GeneticVisualization data={toolCall.result.data.genetic_data} />
                   ) : (
                     <div className="text-sm text-muted-foreground">

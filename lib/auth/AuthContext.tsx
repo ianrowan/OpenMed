@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase'
 import { MedicalProfile, MedicalProfileFormData } from '@/types'
+import { resolve } from 'path'
 
 interface AuthContextType {
   user: User | null
@@ -44,8 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('AuthContext: Fetching profile for userId:', userId)
       
       // Add a timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 10000) // 10 second timeout
+      const timeoutPromise = new Promise((_, resolve) => {
+        setTimeout(() => resolve(), 500) // 10 second timeout
       })
       
       const fetchPromise = supabase
@@ -57,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.error('Error fetching profile:', error)
+        console.log('Error fetching profile:', error)
         return null
       }
 
@@ -69,7 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return data
     } catch (error) {
-      console.error('Error fetching profile:', error)
       return null
     }
   }

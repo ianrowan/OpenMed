@@ -1,45 +1,83 @@
-import { supabase } from '@/lib/supabase'
 import { BloodTestResult, Biomarker, ToolResult } from '@/types'
 import { BloodWorkQuerySchema } from '@/types'
 import { z } from 'zod'
+import type { SupabaseClient } from '@/lib/supabase'
 
 export class BloodWorkTool {
+  private supabase: SupabaseClient | null
+
+  constructor(supabaseClient?: SupabaseClient | null) {
+    this.supabase = supabaseClient || null
+  }
   async execute(params: z.infer<typeof BloodWorkQuerySchema>): Promise<ToolResult> {
     try {
       // If Supabase is not configured, return mock data for demo
-      if (!supabase) {
+      if (!this.supabase) {
         return this.getMockBloodWorkData(params)
       }
 
       const userId = await this.getCurrentUserId()
       
-      let query = supabase
-        .from('medical_data')
+      console.log(`Querying blood test results for user ${userId}...`)
+      
+      // Start with base query
+      let query = this.supabase
+        .from('blood_test_results')
         .select('*')
         .eq('user_id', userId)
-        .eq('data_type', 'blood_work')
-        .order('uploaded_at', { ascending: false })
+        .order('test_date', { ascending: false })
 
       // Apply filters
-      if (params.date_range) {
-        query = query
-          .gte('uploaded_at', params.date_range.start)
-          .lte('uploaded_at', params.date_range.end)
+      if (params?.date_range) {
+        if (params.date_range.start) {
+          query = query.gte('test_date', params.date_range.start);
+        }
+        if (params.date_range.end) {
+          query = query.lte('test_date', params.date_range.end);
+        }
       }
 
-      if (params.test_id) {
-        query = query.eq('id', params.test_id)
+      if (params?.test_id) {
+        query = query.eq('id', params.test_id);
       }
 
+      // Remove the problematic JSONB filtering at query level - we'll do it after getting data
+      
       const { data, error } = await query
+
+      console.log('Blood test query result:', { data, error, dataLength: data?.length })
 
       if (error) throw error
 
-      const bloodTests: BloodTestResult[] = data.map(row => row.data)
+      // Map data from the blood_test_results table to our BloodTestResult type
+      const bloodTests: BloodTestResult[] = data.map((row: any) => ({
+        id: row.id,
+        user_id: row.user_id,
+        test_date: row.test_date,
+        lab_name: row.lab_name,
+        biomarkers: (row.biomarkers || []).map((biomarker: any) => ({
+          name: biomarker.biomarker, // Transform 'biomarker' field to 'name'
+          value: biomarker.value,
+          unit: biomarker.unit,
+          reference_range: {
+            min: biomarker.referenceMin || 0, // Transform referenceMin to reference_range.min
+            max: biomarker.referenceMax || 0  // Transform referenceMax to reference_range.max
+          },
+          status: biomarker.status,
+          notes: biomarker.interpretation // Map interpretation to notes
+        })),
+        uploaded_at: row.uploaded_at
+      }))
       
-      // Filter biomarkers if specified
-      let filteredTests = bloodTests
+      console.log('Transformed blood tests:', { count: bloodTests.length, firstTest: bloodTests[0] })
+      
+      // Transform data from upload format to internal BloodTestResult format
+      // The upload route stores biomarkers with different field names than our internal types
+      let filteredTests = bloodTests;
+      
+      // Post-query filter by specific markers if needed
       if (params.markers) {
+        console.log('Filtering by markers:', params.markers)
         filteredTests = bloodTests.map(test => ({
           ...test,
           biomarkers: test.biomarkers.filter(marker => 
@@ -47,9 +85,10 @@ export class BloodWorkTool {
               marker.name.toLowerCase().includes(m.toLowerCase())
             )
           )
-        })).filter(test => test.biomarkers.length > 0)
+        })).filter(test => test.biomarkers.length > 0);
+        console.log('After marker filtering:', { count: filteredTests.length })
       }
-
+      
       // Filter out-of-range only
       if (params.out_of_range_only) {
         filteredTests = filteredTests.map(test => ({
@@ -57,11 +96,17 @@ export class BloodWorkTool {
           biomarkers: test.biomarkers.filter(marker => 
             marker.status !== 'normal'
           )
-        })).filter(test => test.biomarkers.length > 0)
+        })).filter(test => test.biomarkers.length > 0);
       }
 
       const summary = this.generateBloodWorkSummary(filteredTests)
       const visualization = this.createBloodWorkVisualization(filteredTests)
+
+      console.log('Final blood work result:', { 
+        testsCount: filteredTests.length, 
+        summary: summary.substring(0, 100) + '...',
+        hasVisualization: !!visualization 
+      })
 
       return {
         data: {
@@ -155,12 +200,37 @@ export class BloodWorkTool {
   }
 
   private async getCurrentUserId(): Promise<string> {
-    if (!supabase) {
+    if (!this.supabase) {
       return 'demo-user'
     }
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('User not authenticated')
-    return user.id
+    
+    try {
+      console.log('Getting user authentication...')
+      
+      // Add a timeout to prevent hanging
+      const authPromise = this.supabase.auth.getUser()
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Auth timeout')), 5000)
+      )
+      
+      const { data: { user }, error } = await Promise.race([authPromise, timeoutPromise]) as any
+      
+      if (error) {
+        console.log('Auth error, using demo user:', error)
+        return 'demo-user'
+      }
+      
+      if (!user) {
+        console.log('No user found, using demo user')
+        return 'demo-user'
+      }
+      
+      console.log('User authenticated:', user.id)
+      return user.id
+    } catch (error) {
+      console.log('Auth failed, using demo user:', error)
+      return 'demo-user'
+    }
   }
 
   private generateBloodWorkSummary(tests: BloodTestResult[]): string {
