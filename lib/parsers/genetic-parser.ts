@@ -28,6 +28,22 @@ export interface ParsedGeneticData {
   }
 }
 
+export interface RawGeneticData {
+  variants: RawVariant[]
+  metadata: {
+    totalVariants: number
+    dataSource: string
+    chromosomes: string[]
+  }
+}
+
+export interface RawVariant {
+  rsid: string
+  chromosome: string
+  position: number
+  genotype: string
+}
+
 export interface AnnotatedVariant {
   rsid: string
   chromosome: string
@@ -50,13 +66,44 @@ export interface GeneAnnotation {
 // Clinically relevant SNPs database (in-memory for now)
 
 
-// Parse 23andMe format genetic data
+// Parse 23andMe format genetic data - returns annotated data for visualization
 export function parseGeneticData(content: string, source: string = '23andme'): ParsedGeneticData {
+  const rawData = parseRawGeneticData(content, source)
+  
+  // Annotate variants for visualization
+  const annotatedVariants: AnnotatedVariant[] = rawData.variants.map(variant => {
+    const annotation = CLINICAL_SNPS[variant.rsid]
+    return {
+      ...variant,
+      annotation
+    }
+  })
+
+  // Count annotations
+  const annotatedCount = annotatedVariants.filter(v => v.annotation).length
+  const clinicallyRelevantCount = annotatedVariants.filter(v => 
+    v.annotation?.clinicalSignificance === 'pathogenic' || 
+    v.annotation?.clinicalSignificance === 'likely_pathogenic'
+  ).length
+
+  return {
+    variants: annotatedVariants,
+    metadata: {
+      totalVariants: rawData.metadata.totalVariants,
+      annotatedVariants: annotatedCount,
+      clinicallyRelevantVariants: clinicallyRelevantCount,
+      dataSource: rawData.metadata.dataSource,
+      chromosomes: rawData.metadata.chromosomes
+    }
+  }
+}
+
+// Parse raw genetic data without annotations - for database storage
+// Parse raw genetic data without annotations - for database storage
+export function parseRawGeneticData(content: string, source: string = '23andme'): RawGeneticData {
   const lines = content.trim().split('\n')
-  const variants: AnnotatedVariant[] = []
+  const variants: RawVariant[] = []
   const chromosomes = new Set<string>()
-  let annotatedCount = 0
-  let clinicallyRelevantCount = 0
 
   for (const line of lines) {
     // Skip comments and empty lines
@@ -77,22 +124,14 @@ export function parseGeneticData(content: string, source: string = '23andme'): P
 
       chromosomes.add(validatedVariant.chromosome)
 
-      // Check for clinical annotation
-      const annotation = CLINICAL_SNPS[validatedVariant.rsid]
-      if (annotation) {
-        annotatedCount++
-        if (annotation.clinicalSignificance === 'pathogenic' || 
-            annotation.clinicalSignificance === 'likely_pathogenic') {
-          clinicallyRelevantCount++
-        }
+      const rawVariant: RawVariant = {
+        rsid: validatedVariant.rsid,
+        chromosome: validatedVariant.chromosome,
+        position: validatedVariant.position,
+        genotype: validatedVariant.genotype
       }
 
-      const annotatedVariant: AnnotatedVariant = {
-        ...validatedVariant,
-        annotation
-      }
-
-      variants.push(annotatedVariant)
+      variants.push(rawVariant)
     } catch (error) {
       console.warn(`Skipping invalid line: ${line}`, error)
       continue
@@ -103,8 +142,6 @@ export function parseGeneticData(content: string, source: string = '23andme'): P
     variants,
     metadata: {
       totalVariants: variants.length,
-      annotatedVariants: annotatedCount,
-      clinicallyRelevantVariants: clinicallyRelevantCount,
       dataSource: source,
       chromosomes: Array.from(chromosomes).sort()
     }

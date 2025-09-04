@@ -9,21 +9,9 @@ const GeneticUploadRequestSchema = z.object({
       chromosome: z.string(),
       position: z.number(),
       genotype: z.string(),
-      annotation: z.object({
-        geneName: z.string().optional(),
-        clinicalSignificance: z.enum(['pathogenic', 'likely_pathogenic', 'uncertain', 'likely_benign', 'benign']).optional(),
-        phenotype: z.string().optional(),
-        drugResponse: z.string().optional(),
-        frequency: z.number().optional(),
-        consequence: z.string().optional(),
-        riskAllele: z.string().optional(),
-        interpretation: z.string().optional(),
-      }).optional(),
     })),
     metadata: z.object({
       totalVariants: z.number(),
-      annotatedVariants: z.number(),
-      clinicallyRelevantVariants: z.number(),
       dataSource: z.string(),
       chromosomes: z.array(z.string()),
     }),
@@ -36,6 +24,9 @@ const GeneticUploadRequestSchema = z.object({
   }),
   fileName: z.string(),
   fileSize: z.number(),
+  // These are for UI display but not stored
+  annotatedVariants: z.number().optional(),
+  clinicallyRelevantVariants: z.number().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -52,13 +43,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = GeneticUploadRequestSchema.parse(body)
 
-    const { data: uploadData, riskAssessment, fileName, fileSize } = validatedData
+    const { data: uploadData, riskAssessment, fileName, fileSize, annotatedVariants, clinicallyRelevantVariants } = validatedData
 
-    // Transform variants into a format suitable for storage
+    // Transform variants into a format suitable for storage - only raw data
     const snpsData = {
-      variants: uploadData.variants,
-      metadata: uploadData.metadata,
-      riskAssessment,
+      variants: uploadData.variants, // Only raw variants without annotations
+      metadata: uploadData.metadata, // Only basic metadata
       uploadInfo: {
         fileName,
         fileSize,
@@ -93,8 +83,8 @@ export async function POST(request: NextRequest) {
       id: (geneticResult as any).id,
       summary: {
         totalVariants: uploadData.metadata.totalVariants,
-        annotatedVariants: uploadData.metadata.annotatedVariants,
-        clinicallyRelevantVariants: uploadData.metadata.clinicallyRelevantVariants,
+        annotatedVariants: annotatedVariants || 0,
+        clinicallyRelevantVariants: clinicallyRelevantVariants || 0,
         highRiskCount: riskAssessment.highRiskVariants.length,
         drugResponseCount: riskAssessment.drugResponseVariants.length,
       }

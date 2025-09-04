@@ -2,6 +2,7 @@ import { GeneticData, SNP, ToolResult } from '@/types'
 import { GeneticQuerySchema } from '@/types'
 import { z } from 'zod'
 import type { SupabaseClient } from '@/lib/supabase'
+import { CLINICAL_SNPS } from '@/lib/parsers/config/SNPs'
 
 export class GeneticTool {
   private supabase: SupabaseClient | null
@@ -11,7 +12,6 @@ export class GeneticTool {
   }
 
   async execute(params: z.infer<typeof GeneticQuerySchema>): Promise<ToolResult> {
-    console.log('Executing GeneticTool with params:', params)
     try {
       // If Supabase is not configured, return mock data for demo
       if (!this.supabase) {
@@ -20,16 +20,61 @@ export class GeneticTool {
 
       const userId = await this.getCurrentUserId()
       
-      console.log(`Querying genetic data for user ${userId}...`)
+      // Step 1: Filter CLINICAL_SNPS to find relevant RSIDs based on query parameters
+      let relevantRsids: string[] = []
+      
+      if (params.rsids) {
+        // If specific RSIDs requested, use those
+        relevantRsids = params.rsids
+      } else {
+        // Filter CLINICAL_SNPS based on other criteria
+        relevantRsids = Object.keys(CLINICAL_SNPS).filter(rsid => {
+          const annotation = CLINICAL_SNPS[rsid]
+          
+          // Filter by genes
+          if (params.genes && annotation.geneName) {
+            const matchesGene = params.genes.some(gene => 
+              annotation.geneName!.toLowerCase().includes(gene.toLowerCase())
+            )
+            if (!matchesGene) return false
+          }
+          
+          // Filter by phenotype (if not "all")
+          if (params.phenotype && params.phenotype.toLowerCase() !== 'all' && annotation.phenotype) {
+            const matchesPhenotype = annotation.phenotype.toLowerCase().includes(params.phenotype.toLowerCase())
+            if (!matchesPhenotype) return false
+          }
+          
+          // Filter by clinical significance
+          if (params.clinical_significance && annotation.clinicalSignificance) {
+            if (!params.clinical_significance.includes(annotation.clinicalSignificance)) return false
+          }
+          
+          return true
+        })
+      }
+
+      // Step 1: Filter CLINICAL_SNPS to find relevant RSIDs based on query parameters
+
+      if (relevantRsids.length === 0) {
+        return {
+          data: null,
+          summary: "No genetic variants found matching the specified criteria.",
+          references: []
+        }
+      }
+
+      // Step 2: Query database using RPC function for only the specific RSIDs we need
+      
       const { data: geneticResults, error } = await this.supabase
-        .from('genetic_data')
-        .select('*')
-        .eq('user_id', userId)
-        .order('uploaded_at', { ascending: false })
-        .limit(1)
-      console.log(geneticResults)
+        .rpc('get_latest_genetic_data', {
+          p_user_id: userId,
+          p_rsid_list: relevantRsids  // JS array → Postgres text[]
+        })
+        .single()
+      
       if (error) throw error
-      if (!geneticResults || geneticResults.length === 0) {
+      if (!geneticResults) {
         return {
           data: null,
           summary: "No genetic data found. Please upload your 23andMe or similar genetic test results.",
@@ -37,99 +82,46 @@ export class GeneticTool {
         }
       }
 
-      // Access the data from the genetic_data table and properly type it
-      type RawGeneticRecord = {
-        id: string;
-        user_id: string;
-        source: string;
-        snps: {
-          variants: any[];
-          metadata: any;
-          riskAssessment: any;
-          uploadInfo: any;
-        };
-        uploaded_at: string;
-        created_at: string;
-        updated_at: string;
-      };
+      const geneticRecord = geneticResults as any
       
-      const rawData = geneticResults[0] as unknown as RawGeneticRecord;
-      console.log('Raw genetic data structure:', JSON.stringify(rawData, null, 2));
-      
-      // Extract the variants from the nested structure that matches the upload route format
-      const uploadVariants = rawData.snps?.variants || [];
-      console.log(`Found ${uploadVariants.length} variants in upload data`);
-      
-      // Transform variants from upload format to our internal SNP format
-      const variants = uploadVariants.map((variant: any) => ({
-        rsid: variant.rsid,
-        chromosome: variant.chromosome,
-        position: variant.position,
-        genotype: variant.genotype,
-        gene: variant.annotation?.geneName, // Transform geneName to gene
-        annotation: variant.annotation ? {
-          phenotype: variant.annotation.phenotype,
-          clinical_significance: variant.annotation.clinicalSignificance, // Transform to snake_case
-          disease_association: variant.annotation.phenotype, // Use phenotype as disease association for now
-          drug_response: variant.annotation.drugResponse,
-          risk_level: this.mapRiskLevel(variant.annotation.clinicalSignificance)
-        } : undefined
-      }));
-      
+      // The RPC function returns filtered variants in the snps_filt.variants structure
+      const relevantRawVariants = geneticRecord.snps_filt?.variants || []
+
+      // Step 3: Annotate the relevant variants on-the-fly
+      const annotatedVariants: SNP[] = relevantRawVariants.map((variant: any) => {
+        const annotation = CLINICAL_SNPS[variant.rsid]
+        return {
+          rsid: variant.rsid,
+          chromosome: variant.chromosome,
+          position: variant.position,
+          genotype: variant.genotype,
+          gene: annotation?.geneName,
+          annotation: annotation ? {
+            phenotype: annotation.phenotype,
+            clinical_significance: annotation.clinicalSignificance,
+            disease_association: annotation.phenotype, // Use phenotype as disease association
+            drug_response: annotation.drugResponse,
+            risk_level: this.mapRiskLevel(annotation.clinicalSignificance)
+          } : undefined
+        }
+      })
+
       const geneticData: GeneticData = {
-        id: rawData.id,
-        user_id: rawData.user_id,
-        source: rawData.source as '23andme' | 'ancestry' | 'other',
-        snps: variants,
-        uploaded_at: rawData.uploaded_at
-      }
-      let filteredSNPs = geneticData.snps
-      console.log(`Initial SNPs count: ${filteredSNPs.length}`);
-
-      // Apply filters (now using transformed SNP format)
-      if (params.rsids) {
-        filteredSNPs = filteredSNPs.filter(snp => 
-          params.rsids!.includes(snp.rsid)
-        )
-        console.log(`After rsids filter: ${filteredSNPs.length}`);
+        id: geneticRecord.id,
+        user_id: geneticRecord.user_id,
+        source: geneticRecord.source as '23andme' | 'ancestry' | 'other',
+        snps: annotatedVariants,
+        uploaded_at: geneticRecord.uploaded_at
       }
 
-      if (params.genes) {
-        filteredSNPs = filteredSNPs.filter(snp => 
-          snp.gene && params.genes!.some(gene => 
-            snp.gene!.toLowerCase().includes(gene.toLowerCase())
-          )
-        )
-        console.log(`After genes filter: ${filteredSNPs.length}`);
-      }
-
-      if (params.phenotype && params.phenotype.toLowerCase() !== 'all') {
-        filteredSNPs = filteredSNPs.filter(snp => 
-          snp.annotation?.phenotype?.toLowerCase().includes(params.phenotype!.toLowerCase())
-        )
-        console.log(`After phenotype filter: ${filteredSNPs.length}`);
-      }
-
-      if (params.clinical_significance) {
-        filteredSNPs = filteredSNPs.filter(snp => 
-          snp.annotation?.clinical_significance && 
-          params.clinical_significance!.includes(snp.annotation.clinical_significance)
-        )
-        console.log(`After clinical_significance filter: ${filteredSNPs.length}`);
-      }
-
-      console.log(`Final filtered SNPs count: ${filteredSNPs.length}`);
-      const summary = this.generateGeneticSummary(filteredSNPs, params)
-      const visualization = this.createGeneticVisualization(filteredSNPs)
-      console.log(summary)
+      const summary = this.generateGeneticSummary(annotatedVariants, params)
+      const visualization = this.createGeneticVisualization(annotatedVariants)
+      
       return {
-        data: {
-          ...geneticData,
-          snps: filteredSNPs
-        },
+        data: geneticData,
         visualization,
         summary,
-        references: this.getGeneticReferences(filteredSNPs)
+        references: this.getGeneticReferences(annotatedVariants)
       }
     } catch (error) {
       throw new Error(`Genetic data query failed: ${error}`)
@@ -203,8 +195,6 @@ export class GeneticTool {
     }
     
     try {
-      console.log('Getting user authentication...')
-      
       // Add a timeout to prevent hanging
       const authPromise = this.supabase.auth.getUser()
       const timeoutPromise = new Promise((_, reject) => 
@@ -214,19 +204,15 @@ export class GeneticTool {
       const { data: { user }, error } = await Promise.race([authPromise, timeoutPromise]) as any
       
       if (error) {
-        console.log('Auth error, using demo user:', error)
         return 'demo-user'
       }
       
       if (!user) {
-        console.log('No user found, using demo user')
         return 'demo-user'
       }
       
-      console.log('User authenticated:', user.id)
       return user.id
     } catch (error) {
-      console.log('Auth failed, using demo user:', error)
       return 'demo-user'
     }
   }

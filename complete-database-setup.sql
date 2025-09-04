@@ -474,4 +474,42 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- ---------------------------------------------------------------
+--  Function : get_latest_genetic_data
+--  Purpose  : Return the newest row for a given user, but keep only the
+--             variants whose rsid appears in the supplied array.
+-- ---------------------------------------------------------------
+create or replace function public.get_latest_genetic_data(
+    p_user_id   uuid,        -- the user we are interested in
+    p_rsid_list text[]       -- array of rs‑ids to keep
+)
+returns table (
+    id          uuid,
+    user_id     uuid,
+    source      text,
+    uploaded_at timestamptz,
+    snps_filt        jsonb         -- JSONB object { "variants": [ … ] }
+)
+language sql
+security definer                     -- runs with the owner's privileges
+as $$
+    select
+        gd.id,
+        gd.user_id,
+        gd.source,
+        gd.uploaded_at,
+        jsonb_build_object(
+            'variants',
+            (
+                select jsonb_agg(v)
+                from jsonb_array_elements(gd.snps -> 'variants') as v
+                where v ->> 'rsid' = any(p_rsid_list)        -- ← filter
+            )
+        ) as snps_filt
+    from genetic_data gd
+    where gd.user_id = p_user_id
+    order by gd.uploaded_at desc
+    limit 1;                               -- only the latest row
+$$;
+
 -- ============================================================

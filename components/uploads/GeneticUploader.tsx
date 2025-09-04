@@ -11,6 +11,7 @@ import { Upload, FileText, CheckCircle, AlertCircle, XCircle, Dna, Shield, Pill,
 import { useAuth } from '@/lib/auth/AuthContext'
 import { 
   parseGeneticData, 
+  parseRawGeneticData,
   validateGeneticFile, 
   getClinicalRiskAssessment,
   type ParsedGeneticData, 
@@ -43,16 +44,19 @@ export default function GeneticUploader({ onUploadComplete }: GeneticUploaderPro
       setUploadProgress(20)
       const content = await validateGeneticFile(file)
 
-      // Parse data
+      // Parse data for display
       setUploadProgress(50)
       const parsedGenetic = parseGeneticData(content, '23andme')
       setParsedData(parsedGenetic)
 
-      // Perform risk assessment
+      // Parse raw data for upload (without annotations)
+      const rawGenetic = parseRawGeneticData(content, '23andme')
+
+      // Perform risk assessment for display
       const assessment = getClinicalRiskAssessment(parsedGenetic.variants)
       setRiskAssessment(assessment)
 
-      // Upload to server
+      // Upload to server - send raw data but include display metadata
       setUploadProgress(75)
       const response = await fetch('/api/upload/genetic', {
         method: 'POST',
@@ -60,10 +64,12 @@ export default function GeneticUploader({ onUploadComplete }: GeneticUploaderPro
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          data: parsedGenetic,
-          riskAssessment: assessment,
+          data: rawGenetic, // Raw data for storage
+          riskAssessment: assessment, // For response summary only
           fileName: file.name,
           fileSize: file.size,
+          annotatedVariants: parsedGenetic.metadata.annotatedVariants,
+          clinicallyRelevantVariants: parsedGenetic.metadata.clinicallyRelevantVariants,
         }),
       })
 
