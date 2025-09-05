@@ -67,14 +67,14 @@ export class GeneticTool {
       // Step 2: Query database using RPC function for only the specific RSIDs we need
       
       const { data: geneticResults, error } = await this.supabase
-        .rpc('get_latest_genetic_data', {
+        .rpc('get_genetic_variants_by_rsids', {
           p_user_id: userId,
-          p_rsid_list: relevantRsids  // JS array → Postgres text[]
-        })
-        .single()
+          p_rsid_list: relevantRsids
+        } as any)
       
       if (error) throw error
-      if (!geneticResults) {
+      const variants = geneticResults as any[]
+      if (!variants || variants.length === 0) {
         return {
           data: null,
           summary: "No genetic data found. Please upload your 23andMe or similar genetic test results.",
@@ -82,18 +82,13 @@ export class GeneticTool {
         }
       }
 
-      const geneticRecord = geneticResults as any
-      
-      // The RPC function returns filtered variants in the snps_filt.variants structure
-      const relevantRawVariants = geneticRecord.snps_filt?.variants || []
-
       // Step 3: Annotate the relevant variants on-the-fly
-      const annotatedVariants: SNP[] = relevantRawVariants.map((variant: any) => {
+      const annotatedVariants: SNP[] = variants.map((variant: any) => {
         const annotation = CLINICAL_SNPS[variant.rsid]
         return {
           rsid: variant.rsid,
           chromosome: variant.chromosome,
-          position: variant.position,
+          position: variant.position || 0, // Default position if not available
           genotype: variant.genotype,
           gene: annotation?.geneName,
           annotation: annotation ? {
@@ -106,12 +101,14 @@ export class GeneticTool {
         }
       })
 
+      // Use the first variant's metadata for the genetic data structure
+      const firstVariant = variants[0] as any
       const geneticData: GeneticData = {
-        id: geneticRecord.id,
-        user_id: geneticRecord.user_id,
-        source: geneticRecord.source as '23andme' | 'ancestry' | 'other',
+        id: firstVariant.id,
+        user_id: firstVariant.user_id,
+        source: firstVariant.source as '23andme' | 'ancestry' | 'other',
         snps: annotatedVariants,
-        uploaded_at: geneticRecord.uploaded_at
+        uploaded_at: firstVariant.created_at
       }
 
       const summary = this.generateGeneticSummary(annotatedVariants, params)

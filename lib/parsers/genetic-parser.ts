@@ -33,15 +33,12 @@ export interface RawGeneticData {
   metadata: {
     totalVariants: number
     dataSource: string
-    chromosomes: string[]
   }
 }
 
 export interface RawVariant {
-  rsid: string
-  chromosome: string
-  position: number
-  genotype: string
+  rsid: string;
+  genotype: string;
 }
 
 export interface AnnotatedVariant {
@@ -68,32 +65,61 @@ export interface GeneAnnotation {
 
 // Parse 23andMe format genetic data - returns annotated data for visualization
 export function parseGeneticData(content: string, source: string = '23andme'): ParsedGeneticData {
-  const rawData = parseRawGeneticData(content, source)
-  
-  // Annotate variants for visualization
-  const annotatedVariants: AnnotatedVariant[] = rawData.variants.map(variant => {
-    const annotation = CLINICAL_SNPS[variant.rsid]
-    return {
-      ...variant,
-      annotation
+  // Parse the content manually to get position data for visualization
+  const lines = content.trim().split('\n')
+  const variants: AnnotatedVariant[] = []
+  const chromosomes = new Set<string>()
+
+  for (const line of lines) {
+    // Skip comments and empty lines
+    if (line.startsWith('#') || line.trim() === '') continue
+
+    const parts = line.split('\t').map(p => p.trim())
+    if (parts.length < 4) continue
+
+    try {
+      const [rsid, chromosome, position, genotype] = parts
+      
+      const validatedVariant = GeneticVariantSchema.parse({
+        rsid,
+        chromosome,
+        position,
+        genotype
+      })
+
+      chromosomes.add(validatedVariant.chromosome)
+
+      const annotation = CLINICAL_SNPS[validatedVariant.rsid]
+      const annotatedVariant: AnnotatedVariant = {
+        rsid: validatedVariant.rsid,
+        chromosome: validatedVariant.chromosome,
+        position: validatedVariant.position,
+        genotype: validatedVariant.genotype,
+        annotation
+      }
+
+      variants.push(annotatedVariant)
+    } catch (error) {
+      console.warn(`Skipping invalid line: ${line}`, error)
+      continue
     }
-  })
+  }
 
   // Count annotations
-  const annotatedCount = annotatedVariants.filter(v => v.annotation).length
-  const clinicallyRelevantCount = annotatedVariants.filter(v => 
+  const annotatedCount = variants.filter(v => v.annotation).length
+  const clinicallyRelevantCount = variants.filter(v => 
     v.annotation?.clinicalSignificance === 'pathogenic' || 
     v.annotation?.clinicalSignificance === 'likely_pathogenic'
   ).length
 
   return {
-    variants: annotatedVariants,
+    variants,
     metadata: {
-      totalVariants: rawData.metadata.totalVariants,
+      totalVariants: variants.length,
       annotatedVariants: annotatedCount,
       clinicallyRelevantVariants: clinicallyRelevantCount,
-      dataSource: rawData.metadata.dataSource,
-      chromosomes: rawData.metadata.chromosomes
+      dataSource: source,
+      chromosomes: Array.from(chromosomes).sort()
     }
   }
 }
@@ -122,12 +148,8 @@ export function parseRawGeneticData(content: string, source: string = '23andme')
         genotype
       })
 
-      chromosomes.add(validatedVariant.chromosome)
-
       const rawVariant: RawVariant = {
         rsid: validatedVariant.rsid,
-        chromosome: validatedVariant.chromosome,
-        position: validatedVariant.position,
         genotype: validatedVariant.genotype
       }
 
@@ -143,7 +165,6 @@ export function parseRawGeneticData(content: string, source: string = '23andme')
     metadata: {
       totalVariants: variants.length,
       dataSource: source,
-      chromosomes: Array.from(chromosomes).sort()
     }
   }
 }

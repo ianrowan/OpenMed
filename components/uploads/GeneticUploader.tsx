@@ -56,7 +56,7 @@ export default function GeneticUploader({ onUploadComplete }: GeneticUploaderPro
       const assessment = getClinicalRiskAssessment(parsedGenetic.variants)
       setRiskAssessment(assessment)
 
-      // Upload to server - send raw data but include display metadata
+      // Upload to server - send only raw data for storage
       setUploadProgress(75)
       const response = await fetch('/api/upload/genetic', {
         method: 'POST',
@@ -64,12 +64,7 @@ export default function GeneticUploader({ onUploadComplete }: GeneticUploaderPro
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          data: rawGenetic, // Raw data for storage
-          riskAssessment: assessment, // For response summary only
-          fileName: file.name,
-          fileSize: file.size,
-          annotatedVariants: parsedGenetic.metadata.annotatedVariants,
-          clinicallyRelevantVariants: parsedGenetic.metadata.clinicallyRelevantVariants,
+          data: rawGenetic, // Only raw data for storage
         }),
       })
 

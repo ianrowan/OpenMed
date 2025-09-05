@@ -38,11 +38,11 @@ export function DeleteDataManager() {
 
   const dataCategories: DataCategory[] = [
     {
-      id: 'genetic_data',
+      id: 'genetics_variants',
       name: 'Genetic Data',
       description: 'All genetic test results and variant data',
       icon: <Database className="h-4 w-4" />,
-      table: 'genetic_data'
+      table: 'genetics_variants'
     },
     {
       id: 'blood_test_results',
