@@ -81,9 +81,12 @@ export class BloodWorkTool {
         filteredTests = bloodTests.map(test => ({
           ...test,
           biomarkers: test.biomarkers.filter(marker => 
-            params.markers!.some(m => 
-              marker.name.toLowerCase().includes(m.toLowerCase())
-            )
+            params.markers!.some(m => {
+              // Split query into tokens and check all are present in marker name
+              const queryTokens = m.toLowerCase().split(/\s+/).filter(token => token.length > 0)
+              const markerName = marker.name.toLowerCase()
+              return queryTokens.every(token => markerName.includes(token))
+            })
           )
         })).filter(test => test.biomarkers.length > 0);
         console.log('After marker filtering:', { count: filteredTests.length })
@@ -179,9 +182,12 @@ export class BloodWorkTool {
     
     if (params.markers) {
       filteredTest.biomarkers = mockBloodTest.biomarkers.filter(marker => 
-        params.markers!.some(m => 
-          marker.name.toLowerCase().includes(m.toLowerCase())
-        )
+        params.markers!.some(m => {
+          // Split query into tokens and check all are present in marker name
+          const queryTokens = m.toLowerCase().split(/\s+/).filter(token => token.length > 0)
+          const markerName = marker.name.toLowerCase()
+          return queryTokens.every(token => markerName.includes(token))
+        })
       )
     }
 
