@@ -6,9 +6,11 @@ import { CLINICAL_SNPS } from '@/lib/parsers/config/SNPs'
 
 export class GeneticTool {
   private supabase: SupabaseClient | null
+  private demoMode: boolean
 
-  constructor(supabaseClient?: SupabaseClient | null) {
+  constructor(supabaseClient?: SupabaseClient | null, demoMode: boolean = false) {
     this.supabase = supabaseClient || null
+    this.demoMode = demoMode
   }
 
   async execute(params: z.infer<typeof GeneticQuerySchema>): Promise<ToolResult> {
@@ -18,7 +20,12 @@ export class GeneticTool {
         return this.getMockGeneticData(params)
       }
 
-      const userId = await this.getCurrentUserId()
+      // Use demo tables if in demo mode, otherwise get current user ID
+      let userId: string | null = null
+      
+      if (!this.demoMode) {
+        userId = await this.getCurrentUserId()
+      }
       
       // Step 1: Filter CLINICAL_SNPS to find relevant RSIDs based on query parameters
       let relevantRsids: string[] = []
@@ -64,15 +71,31 @@ export class GeneticTool {
         }
       }
 
-      // Step 2: Query database using RPC function for only the specific RSIDs we need
+      // Step 2: Query database for the specific RSIDs we need
       
-      const { data: geneticResults, error } = await this.supabase
-        .rpc('get_genetic_variants_by_rsids', {
-          p_user_id: userId,
-          p_rsid_list: relevantRsids
-        } as any)
+      let geneticResults
       
-      if (error) throw error
+      if (this.demoMode) {
+        // Use demo genetics data
+        const { data, error } = await this.supabase
+          .from('demo_genetics_variants')
+          .select('*')
+          .in('rsid', relevantRsids)
+        
+        if (error) throw error
+        geneticResults = data
+      } else {
+        // Use real user genetics data
+        const { data, error } = await this.supabase
+          .from('genetics_variants')
+          .select('*')
+          .eq('user_id', userId!)
+          .in('rsid', relevantRsids)
+        
+        if (error) throw error
+        geneticResults = data
+      }
+      
       const variants = geneticResults as any[]
       if (!variants || variants.length === 0) {
         return {

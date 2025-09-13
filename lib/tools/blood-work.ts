@@ -5,9 +5,11 @@ import type { SupabaseClient } from '@/lib/supabase'
 
 export class BloodWorkTool {
   private supabase: SupabaseClient | null
+  private demoMode: boolean
 
-  constructor(supabaseClient?: SupabaseClient | null) {
+  constructor(supabaseClient?: SupabaseClient | null, demoMode: boolean = false) {
     this.supabase = supabaseClient || null
+    this.demoMode = demoMode
   }
   async execute(params: z.infer<typeof BloodWorkQuerySchema>): Promise<ToolResult> {
     try {
@@ -16,16 +18,27 @@ export class BloodWorkTool {
         return this.getMockBloodWorkData(params)
       }
 
-      const userId = await this.getCurrentUserId()
+      // Use demo tables if in demo mode, otherwise get current user ID
+      let query
       
-      console.log(`Querying blood test results for user ${userId}...`)
-      
-      // Start with base query
-      let query = this.supabase
-        .from('blood_test_results')
-        .select('*')
-        .eq('user_id', userId)
-        .order('test_date', { ascending: false })
+      if (this.demoMode) {
+        console.log('Querying demo blood test results (DEMO MODE)...')
+        
+        query = this.supabase
+          .from('demo_blood_test_results')
+          .select('*')
+          .order('test_date', { ascending: false })
+      } else {
+        const userId = await this.getCurrentUserId()
+        
+        console.log(`Querying blood test results for user ${userId}...`)
+        
+        query = this.supabase
+          .from('blood_test_results')
+          .select('*')
+          .eq('user_id', userId)
+          .order('test_date', { ascending: false })
+      }
 
       // Apply filters
       if (params?.date_range) {

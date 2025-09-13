@@ -12,7 +12,9 @@ import { FileUpload } from '@/components/data/file-upload'
 import { AIProcessingStages } from '@/components/ui/ai-processing'
 import { ChatSidebar } from '@/components/chat/chat-sidebar'
 import { useChatContext } from '@/components/chat/chat-context'
-import { Send, Upload, Activity, Menu, X } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Send, Upload, Activity, Menu, X, TestTube } from 'lucide-react'
 import { ModelType } from '@/lib/ai'
 import { cn } from '@/lib/utils'
 import type { Message as UIMessage } from 'ai'
@@ -37,6 +39,7 @@ export function ChatInterfaceWithHistory() {
   const [showUpload, setShowUpload] = useState(false)
   const [selectedModel, setSelectedModel] = useState<ModelType>('gpt-4.1-mini')
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [demoMode, setDemoMode] = useState(false)
   
   const {
     currentConversation,
@@ -53,7 +56,8 @@ export function ChatInterfaceWithHistory() {
     id: currentConversation?.id || 'default', // Use conversation ID as the chat ID
     body: {
       model: selectedModel,
-      conversation_id: currentConversation?.id
+      conversation_id: currentConversation?.id,
+      demo_mode: demoMode
     },
     onError: (error) => {
       console.error('Chat error:', error)
@@ -147,11 +151,23 @@ export function ChatInterfaceWithHistory() {
                   </Button>
                   <h1 className="text-lg font-semibold">OpenMed AI Chat</h1>
                 </div>
-                <ModelSelector
-                  selectedModel={selectedModel}
-                  onModelChange={setSelectedModel}
-                  disabled={isLoading}
-                />
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <TestTube className="w-4 h-4 text-muted-foreground" />
+                    <Label htmlFor="demo-mode" className="text-sm">Demo Mode</Label>
+                    <Switch 
+                      id="demo-mode"
+                      checked={demoMode} 
+                      onCheckedChange={setDemoMode}
+                      className="data-[state=checked]:bg-orange-500"
+                    />
+                  </div>
+                  <ModelSelector
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
+                    disabled={isLoading}
+                  />
+                </div>
               </div>
             </div>
 
@@ -163,8 +179,21 @@ export function ChatInterfaceWithHistory() {
                 </div>
                 <h2 className="text-2xl font-semibold">Welcome to OpenMed AI</h2>
                 <p className="text-muted-foreground max-w-md">
-                  Upload your medical data and start chatting to gain insights about your health.
-                  I can analyze blood work, genetic data, and search medical literature.
+                  {demoMode ? (
+                    <>
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded-md text-sm font-medium mb-2">
+                        <TestTube className="w-4 h-4" />
+                        Demo Mode Active
+                      </span>
+                      <br />
+                      You're chatting with sample medical data. Toggle off Demo Mode to use your own data.
+                    </>
+                  ) : (
+                    <>
+                      Upload your medical data and start chatting to gain insights about your health.
+                      I can analyze blood work, genetic data, and search medical literature.
+                    </>
+                  )}
                 </p>
               </div>
 

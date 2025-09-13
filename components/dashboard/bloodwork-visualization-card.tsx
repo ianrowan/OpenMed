@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -38,22 +38,25 @@ interface BloodTestResult {
   uploaded_at: string
 }
 
-export default function BloodworkVisualizationCard() {
+interface BloodworkVisualizationCardProps {
+  demoMode?: boolean
+}
+
+export default function BloodworkVisualizationCard({ demoMode = false }: BloodworkVisualizationCardProps) {
   const [bloodTests, setBloodTests] = useState<BloodTestResult[]>([])
   const [currentTestIndex, setCurrentTestIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchBloodTests()
-  }, [])
-
-  const fetchBloodTests = async () => {
+  const fetchBloodTests = useCallback(async () => {
     try {
-      const response = await fetch('/api/blood-test-results')
+      setLoading(true)
+      setError(null)
+      const url = demoMode ? '/api/blood-test-results?demo=true' : '/api/blood-test-results'
+      const response = await fetch(url)
       if (response.ok) {
-        const data = await response.json()
-        setBloodTests(data.bloodTests || [])
+        const result = await response.json()
+        setBloodTests(result.data || [])
       } else {
         setError('Failed to fetch blood test results')
       }
@@ -63,7 +66,11 @@ export default function BloodworkVisualizationCard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [demoMode])
+
+  useEffect(() => {
+    fetchBloodTests()
+  }, [fetchBloodTests])
 
   const getStatusIcon = (status: string) => {
     switch (status) {

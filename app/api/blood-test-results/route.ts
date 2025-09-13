@@ -1,47 +1,64 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextRequest } from 'next/server'
-import { cookies } from 'next/headers'
+import { createServerComponentClient } from '@/lib/supabase'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-        },
+    const { searchParams } = new URL(request.url)
+    const demo = searchParams.get('demo') === 'true'
+
+    const supabase = await createServerComponentClient()
+
+    if (demo) {
+      // Demo mode - query demo table without authentication
+      const { data, error } = await supabase
+        .from('demo_blood_test_results')
+        .select('*')
+        .order('test_date', { ascending: false })
+
+      if (error) {
+        console.error('Demo blood test results error:', error)
+        return NextResponse.json(
+          { error: 'Failed to fetch demo blood test results' },
+          { status: 500 }
+        )
       }
-    )
-    
-    // Get the current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+      return NextResponse.json({ data: data || [] })
     }
 
-    // Fetch blood test results for the user
-    const { data: bloodTests, error } = await supabase
+    // Regular mode - require authentication
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const { data, error } = await supabase
       .from('blood_test_results')
       .select('*')
       .eq('user_id', user.id)
       .order('test_date', { ascending: false })
 
     if (error) {
-      console.error('Error fetching blood test results:', error)
-      return Response.json(
+      console.error('Blood test results error:', error)
+      return NextResponse.json(
         { error: 'Failed to fetch blood test results' },
         { status: 500 }
       )
     }
 
-    return Response.json({ bloodTests })
+    return NextResponse.json({ data: data || [] })
   } catch (error) {
-    console.error('Error in blood test results API:', error)
-    return Response.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Unexpected error in blood test results API:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }

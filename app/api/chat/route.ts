@@ -10,7 +10,7 @@ import { cookies } from 'next/headers'
 
 export async function POST(req: Request) {
   try {
-    const { messages, model, conversation_id } = await req.json()
+    const { messages, model, conversation_id, demo_mode } = await req.json()
 
     // Get the AI model based on the request or use default
     const selectedModel = getAIModel(model) || aiModel
@@ -68,9 +68,9 @@ export async function POST(req: Request) {
       }
     }
 
-    // Initialize tools with the authenticated Supabase client
-    const bloodWorkTool = new BloodWorkTool(supabase)
-    const geneticTool = new GeneticTool(supabase)
+    // Initialize tools with the authenticated Supabase client and demo mode
+    const bloodWorkTool = new BloodWorkTool(supabase, demo_mode)
+    const geneticTool = new GeneticTool(supabase, demo_mode)
     const medicalSearchTool = new MedicalSearchTool()
 
     const result = streamText({

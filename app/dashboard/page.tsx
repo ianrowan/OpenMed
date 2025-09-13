@@ -1,18 +1,23 @@
 'use client'
 
+import { useState } from 'react'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DeleteDataManager } from '@/components/dashboard/delete-data-manager'
 import BloodworkVisualizationCard from '@/components/dashboard/bloodwork-visualization-card'
 import GeneticSearchCard from '@/components/dashboard/genetic-search-card'
 import { Toaster } from '@/components/ui/toaster'
-import { User, Settings, Upload, MessageSquare, Activity, Calendar, Ruler, Weight } from 'lucide-react'
+import { User, Settings, Upload, MessageSquare, Activity, Calendar, Ruler, Weight, TestTube } from 'lucide-react'
 import Link from 'next/link'
 
 export default function DashboardPage() {
   const { user, profile, signOut } = useAuth()
+  const [demoMode, setDemoMode] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
@@ -37,6 +42,16 @@ export default function DashboardPage() {
               <h1 className="text-2xl font-bold text-gray-900">OpenMed</h1>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Demo Mode Toggle */}
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="demo-mode"
+                  checked={demoMode}
+                  onCheckedChange={setDemoMode}
+                />
+                <Label htmlFor="demo-mode" className="text-sm">Demo Mode</Label>
+              </div>
+              
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                 {user?.email ? getInitials(user.email) : 'U'}
               </div>
@@ -110,11 +125,21 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
+            {/* Demo Mode Alert */}
+            {demoMode && (
+              <Alert className="border-blue-200 bg-blue-50">
+                <TestTube className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  <strong>Demo Mode Active:</strong> You're viewing sample medical data. Toggle off Demo Mode to see your own data.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Blood Work Results Visualization */}
-            <BloodworkVisualizationCard />
+            <BloodworkVisualizationCard demoMode={demoMode} />
 
             {/* Genetic Variant Search */}
-            <GeneticSearchCard />
+            <GeneticSearchCard demoMode={demoMode} />
           </div>
 
           {/* Sidebar */}

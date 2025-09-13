@@ -34,7 +34,11 @@ interface GeneticVariant {
   }
 }
 
-export default function GeneticSearchCard() {
+interface GeneticSearchCardProps {
+  demoMode?: boolean
+}
+
+export default function GeneticSearchCard({ demoMode = false }: GeneticSearchCardProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [variants, setVariants] = useState<GeneticVariant[]>([])
   const [loading, setLoading] = useState(false)
@@ -53,10 +57,13 @@ export default function GeneticSearchCard() {
       setError(null)
       
       try {
-        const response = await fetch(`/api/genetic-search?query=${encodeURIComponent(query)}`)
+        const url = demoMode 
+          ? `/api/genetic-search?query=${encodeURIComponent(query)}&demo=true`
+          : `/api/genetic-search?query=${encodeURIComponent(query)}`
+        const response = await fetch(url)
         if (response.ok) {
-          const data = await response.json()
-          setVariants(data.variants || [])
+          const result = await response.json()
+          setVariants(result.data || [])
           setSearched(true)
         } else {
           setError('Failed to search genetic variants')
@@ -68,12 +75,23 @@ export default function GeneticSearchCard() {
         setLoading(false)
       }
     }, 300),
-    []
+    [demoMode]
   )
 
   useEffect(() => {
     debounceSearch(searchQuery)
   }, [searchQuery, debounceSearch])
+
+  // Clear results when demo mode changes
+  useEffect(() => {
+    setVariants([])
+    setSearched(false)
+    setError(null)
+    // Re-search if there's a current query
+    if (searchQuery.length >= 2) {
+      debounceSearch(searchQuery)
+    }
+  }, [demoMode, debounceSearch, searchQuery])
 
   const getSignificanceIcon = (significance?: string) => {
     switch (significance) {
