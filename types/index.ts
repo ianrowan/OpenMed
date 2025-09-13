@@ -152,7 +152,7 @@ export const GeneticQuerySchema = z.object({
 
 export const MedicalSearchSchema = z.object({
   query: z.string(),
-  max_results: z.number().max(20).default(10),
+  max_results: z.number().max(20).default(5),
   include_user_data: z.boolean().default(true),
   search_type: z.enum(['literature', 'guidelines', 'drug_interactions', 'all']).default('all')
 })

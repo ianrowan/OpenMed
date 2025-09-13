@@ -5,11 +5,12 @@ import { BloodWorkTool } from '@/lib/tools/blood-work'
 import { GeneticTool } from '@/lib/tools/genetics'
 import { BloodWorkQuerySchema, GeneticQuerySchema, MedicalSearchSchema } from '@/types'
 import { MedicalSearchTool } from '@/lib/tools/medical-search-tool'
-import { createServerComponentClient } from '@/lib/supabase'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 export async function POST(req: Request) {
   try {
-    const { messages, model } = await req.json()
+    const { messages, model, conversation_id } = await req.json()
 
     // Get the AI model based on the request or use default
     const selectedModel = getAIModel(model) || aiModel
@@ -28,7 +29,44 @@ export async function POST(req: Request) {
     }
 
     // Create Supabase client with auth session
-    const supabase = await createServerComponentClient()
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+        },
+      }
+    )
+
+    // Get the current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Save the user message immediately if conversation_id is provided
+    if (conversation_id && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+      if (lastMessage.role === 'user') {
+        await (supabase as any)
+          .from('chat_messages')
+          .insert({
+            user_id: user.id,
+            conversation_id,
+            role: lastMessage.role,
+            content: lastMessage.content,
+            tool_calls: null
+          })
+      }
+    }
 
     // Initialize tools with the authenticated Supabase client
     const bloodWorkTool = new BloodWorkTool(supabase)
@@ -56,6 +94,20 @@ export async function POST(req: Request) {
           parameters: MedicalSearchSchema,
           execute: async (params) => await medicalSearchTool.execute(params),
         }),
+      },
+      onFinish: async (result) => {
+        // Save the assistant response immediately when it's complete
+        if (conversation_id && result.text) {
+          await (supabase as any)
+            .from('chat_messages')
+            .insert({
+              user_id: user.id,
+              conversation_id,
+              role: 'assistant',
+              content: result.text,
+              tool_calls: result.toolCalls || null
+            })
+        }
       }
     })
 

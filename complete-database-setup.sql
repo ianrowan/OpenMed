@@ -83,10 +83,20 @@ CREATE TABLE public.genetics_variants (
 CREATE TABLE public.chat_messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  conversation_id TEXT NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
   content TEXT NOT NULL,
   tool_calls JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Conversations table to track conversation metadata
+CREATE TABLE public.conversations (
+  id TEXT PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  title TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Medical literature cache (for search optimization)
@@ -129,6 +139,11 @@ CREATE UNIQUE INDEX idx_genetics_variants_user_rsid_unique ON public.genetics_va
 
 CREATE INDEX idx_chat_messages_user_id ON public.chat_messages(user_id);
 CREATE INDEX idx_chat_messages_created_at ON public.chat_messages(created_at DESC);
+CREATE INDEX idx_chat_messages_conversation_id ON public.chat_messages(conversation_id);
+CREATE INDEX idx_chat_messages_user_conversation ON public.chat_messages(user_id, conversation_id);
+
+CREATE INDEX idx_conversations_user_id ON public.conversations(user_id);
+CREATE INDEX idx_conversations_created_at ON public.conversations(created_at DESC);
 
 CREATE INDEX idx_medical_literature_query_hash ON public.medical_literature(query_hash);
 CREATE INDEX idx_medical_literature_expires_at ON public.medical_literature(expires_at);
@@ -158,6 +173,10 @@ CREATE TRIGGER set_updated_at_genetics_variants
   BEFORE UPDATE ON public.genetics_variants
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+CREATE TRIGGER set_updated_at_conversations
+  BEFORE UPDATE ON public.conversations
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
 CREATE TRIGGER set_updated_at_user_preferences
   BEFORE UPDATE ON public.user_preferences
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -177,6 +196,7 @@ ALTER TABLE public.medical_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blood_test_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.genetics_variants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.medical_literature ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
 
@@ -237,6 +257,19 @@ CREATE POLICY "Users can insert own chat messages" ON public.chat_messages
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete own chat messages" ON public.chat_messages
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Conversations policies
+CREATE POLICY "Users can view own conversations" ON public.conversations
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own conversations" ON public.conversations
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own conversations" ON public.conversations
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own conversations" ON public.conversations
   FOR DELETE USING (auth.uid() = user_id);
 
 -- Medical literature policies (shared cache, but read-only for users)

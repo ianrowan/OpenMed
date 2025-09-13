@@ -1,7 +1,8 @@
 'use client'
 
 import { useAuth } from '@/lib/auth/AuthContext'
-import { ChatInterface } from '@/components/chat/chat-interface'
+import { ChatInterfaceWithHistory } from '@/components/chat/chat-interface-with-history'
+import { ChatProvider } from '@/components/chat/chat-context'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -32,28 +33,30 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="container mx-auto h-screen max-w-4xl p-4">
-      <div className="flex h-full flex-col">
-        <header className="mb-6 border-b pb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-primary">OpenMed Chat</h1>
-              <p className="text-muted-foreground">
-                AI-powered medical data analysis. Chat with your health data to gain insights.
-              </p>
+    <ChatProvider>
+      <div className="h-screen max-w-full">
+        <div className="flex h-full flex-col">
+          <header className="border-b px-6 py-4 bg-background flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-primary">OpenMed Chat</h1>
+                <p className="text-sm text-muted-foreground">
+                  AI-powered medical data analysis with conversation history
+                </p>
+              </div>
+              <Link href="/dashboard">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Dashboard
+                </Button>
+              </Link>
             </div>
-            <Link href="/dashboard">
-              <Button variant="ghost">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Dashboard
-              </Button>
-            </Link>
-          </div>
-        </header>
-        <main className="flex-1 min-h-0">
-          <ChatInterface />
-        </main>
+          </header>
+          <main className="flex-1 min-h-0">
+            <ChatInterfaceWithHistory />
+          </main>
+        </div>
       </div>
-    </div>
+    </ChatProvider>
   )
 }

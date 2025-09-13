@@ -15,8 +15,8 @@ import { ModelType } from '@/lib/ai'
 
 export function ChatInterface() {
   const [showUpload, setShowUpload] = useState(false)
-  const [selectedModel, setSelectedModel] = useState<ModelType>('gpt-4-turbo')
-  
+  const [selectedModel, setSelectedModel] = useState<ModelType>('gpt-4.1-mini')
+
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/chat',
     body: {

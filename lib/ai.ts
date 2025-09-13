@@ -2,14 +2,14 @@ import { openai } from '@ai-sdk/openai'
 
 // Initialize OpenAI client (optional for demo mode)
 export const aiModel = process.env.OPENAI_API_KEY 
-  ? openai('gpt-4-turbo')
+  ? openai('gpt-4.1-mini')
   : null
 
 // Function to get AI model based on preference
 export const getAIModel = (modelName?: string) => {
   if (!process.env.OPENAI_API_KEY) return null
   
-  const model = modelName || 'gpt-4-turbo'
+  const model = modelName || 'gpt-4.1-mini'
   return openai(model)
 }
 
@@ -103,23 +103,11 @@ export const MODEL_CONFIGS = {
     topP: 0.9,
     description: 'Faster, more efficient GPT-5 variant',
   },
-  'gpt-4-turbo': {
-    maxTokens: 4096,
-    temperature: 0.7,
-    topP: 0.9,
-    description: 'GPT-4 Turbo with enhanced speed and capabilities',
-  },
-  'gpt-4': {
+  'gpt-4.1-mini': {
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
-    description: 'Standard GPT-4 model',
-  },
-  'gpt-3.5-turbo': {
-    maxTokens: 4096,
-    temperature: 0.7,
-    topP: 0.9,
-    description: 'Fast and efficient GPT-3.5 Turbo',
+    description: 'Faster, more efficient GPT-4.1 variant',
   },
 } as const
 
@@ -156,21 +144,9 @@ export const AVAILABLE_MODELS: Array<{
     tier: 'standard'
   },
   {
-    id: 'gpt-4-turbo',
-    name: 'GPT-4 Turbo',
+    id: 'gpt-4.1-mini',
+    name: 'GPT-4.1 Mini',
     description: 'Fast and capable, good for most tasks',
     tier: 'standard'
-  },
-  {
-    id: 'gpt-4',
-    name: 'GPT-4',
-    description: 'Reliable and powerful general-purpose model',
-    tier: 'standard'
-  },
-  {
-    id: 'gpt-3.5-turbo',
-    name: 'GPT-3.5 Turbo',
-    description: 'Quick and efficient for basic tasks',
-    tier: 'basic'
   },
 ]

@@ -47,3 +47,7 @@ yarn-error.log*
 # Medical data (sensitive)
 /uploads
 /medical-data
+
+parse_quest_data.js
+parsed_bloodwork_corrected.csv
+data.json
