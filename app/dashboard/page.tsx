@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { DeleteDataManager } from '@/components/dashboard/delete-data-manager'
+import BloodworkVisualizationCard from '@/components/dashboard/bloodwork-visualization-card'
+import GeneticSearchCard from '@/components/dashboard/genetic-search-card'
 import { Toaster } from '@/components/ui/toaster'
 import { User, Settings, Upload, MessageSquare, Activity, Calendar, Ruler, Weight } from 'lucide-react'
 import Link from 'next/link'
@@ -108,31 +110,11 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Activity className="h-5 w-5" />
-                  <span>Recent Activity</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3 text-sm">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    <span className="text-gray-600">Account created</span>
-                    <span className="text-gray-400">just now</span>
-                  </div>
-                  {profile && (
-                    <div className="flex items-center space-x-3 text-sm">
-                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                      <span className="text-gray-600">Medical profile completed</span>
-                      <span className="text-gray-400">just now</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Blood Work Results Visualization */}
+            <BloodworkVisualizationCard />
+
+            {/* Genetic Variant Search */}
+            <GeneticSearchCard />
           </div>
 
           {/* Sidebar */}
