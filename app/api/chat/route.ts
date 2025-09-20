@@ -7,6 +7,7 @@ import { BloodWorkQuerySchema, GeneticQuerySchema, MedicalSearchSchema } from '@
 import { MedicalSearchTool } from '@/lib/tools/medical-search-tool'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { checkUsageLimit, incrementUsage, formatUsageLimitError, MODEL_TIERS } from '@/lib/usage-limits'
 
 export async function POST(req: Request) {
   try {
@@ -49,6 +50,33 @@ export async function POST(req: Request) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Check usage limits for the selected model
+    const usageCheck = await checkUsageLimit(supabase, user.id, model || 'gpt-4.1-mini')
+    if (!usageCheck.allowed) {
+      const modelTier = MODEL_TIERS[model || 'gpt-4.1-mini']
+      const errorMessage = usageCheck.error || formatUsageLimitError(
+        modelTier,
+        usageCheck.currentUsage,
+        usageCheck.limit,
+        usageCheck.resetTime
+      )
+      
+      return new Response(
+        JSON.stringify({ 
+          error: errorMessage,
+          type: 'USAGE_LIMIT_EXCEEDED',
+          currentUsage: usageCheck.currentUsage,
+          limit: usageCheck.limit,
+          resetTime: usageCheck.resetTime.toISOString(),
+          modelTier
+        }),
+        { 
+          status: 429, // Too Many Requests
+          headers: { 'Content-Type': 'application/json' }
+        }
       )
     }
 
@@ -108,6 +136,9 @@ export async function POST(req: Request) {
               tool_calls: result.toolCalls || null
             })
         }
+        
+        // Increment usage count after successful completion
+        await incrementUsage(supabase, user.id, model || 'gpt-4.1-mini')
       }
     })
 

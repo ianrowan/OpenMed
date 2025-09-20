@@ -123,7 +123,7 @@ export const AVAILABLE_MODELS: Array<{
   id: ModelType
   name: string
   description: string
-  tier: 'premium' | 'standard' | 'basic'
+  tier: 'premium' | 'basic'
 }> = [
   {
     id: 'gpt-5',
@@ -141,12 +141,12 @@ export const AVAILABLE_MODELS: Array<{
     id: 'gpt-5-mini',
     name: 'GPT-5 Mini',
     description: 'Faster GPT-5 variant, great balance of speed and quality',
-    tier: 'standard'
+    tier: 'basic'
   },
   {
     id: 'gpt-4.1-mini',
     name: 'GPT-4.1 Mini',
     description: 'Fast and capable, good for most tasks',
-    tier: 'standard'
+    tier: 'basic'
   },
 ]

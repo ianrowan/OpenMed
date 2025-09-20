@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { useChat } from 'ai/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChatMessage } from '@/components/chat/chat-message'
 import { ToolCallVisualization } from '@/components/chat/tool-call-visualization'
 import { ModelSelector } from '@/components/chat/model-selector'
+import { UsageLimitError } from '@/components/chat/usage-limit-error'
 import { FileUpload } from '@/components/data/file-upload'
 import { AIProcessingStages } from '@/components/ui/ai-processing'
 import { Send, Upload, Activity } from 'lucide-react'
@@ -16,6 +18,11 @@ import { ModelType } from '@/lib/ai'
 export function ChatInterface() {
   const [showUpload, setShowUpload] = useState(false)
   const [selectedModel, setSelectedModel] = useState<ModelType>('gpt-4.1-mini')
+  const [chatError, setChatError] = useState<{
+    message: string
+    type?: string
+    details?: any
+  } | null>(null)
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/chat',
@@ -24,6 +31,38 @@ export function ChatInterface() {
     },
     onError: (error) => {
       console.error('Chat error:', error)
+      
+      // Clear any previous error
+      setChatError(null)
+      
+      // Try to parse the error response for usage limit errors
+      try {
+        if (error.message) {
+          // Try to parse JSON error response
+          const errorData = JSON.parse(error.message)
+          if (errorData.type === 'USAGE_LIMIT_EXCEEDED') {
+            setChatError({
+              message: errorData.error,
+              type: 'USAGE_LIMIT_EXCEEDED',
+              details: {
+                currentUsage: errorData.currentUsage,
+                limit: errorData.limit,
+                resetTime: new Date(errorData.resetTime),
+                modelTier: errorData.modelTier
+              }
+            })
+            return
+          }
+        }
+      } catch (parseError) {
+        // If parsing fails, fall back to generic error
+      }
+      
+      // Generic error handling
+      setChatError({
+        message: error.message || 'An error occurred while processing your request',
+        type: 'GENERIC_ERROR'
+      })
     },
   })
 
@@ -88,16 +127,67 @@ export function ChatInterface() {
         </div>
 
         {/* Fixed chat input area at bottom */}
-        <div className="border-t p-4 bg-background flex-shrink-0">
-          <form onSubmit={handleSubmit} className="flex gap-2 max-w-2xl mx-auto">
-            <Input
+        <div className="border-t p-4 bg-background flex-shrink-0 space-y-4">
+          {/* Error display */}
+          {chatError && (
+            <div className="space-y-2">
+              {chatError.type === 'USAGE_LIMIT_EXCEEDED' && chatError.details ? (
+                <UsageLimitError
+                  modelTier={chatError.details.modelTier}
+                  resetTime={chatError.details.resetTime}
+                  className="max-w-2xl mx-auto"
+                />
+              ) : (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 max-w-2xl mx-auto">
+                  <div className="flex">
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                        Error
+                      </h3>
+                      <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                        {chatError.message}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="text-center">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setChatError(null)}
+                  className="text-xs"
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          <form 
+            onSubmit={(e) => {
+              setChatError(null) // Clear errors on new submission
+              handleSubmit(e)
+            }} 
+            className="flex gap-2 max-w-2xl mx-auto"
+          >
+            <Textarea
               value={input}
               onChange={handleInputChange}
               placeholder="Ask about your health data... (e.g., 'What are my out of range biomarkers?')"
-              className="flex-1"
-              disabled={isLoading}
+              className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  const form = e.currentTarget.form
+                  if (form) {
+                    setChatError(null)
+                    handleSubmit(e as any)
+                  }
+                }
+              }}
             />
-            <Button type="submit" disabled={!input.trim() || isLoading}>
+            <Button type="submit" disabled={!input.trim() || isLoading} className="self-end">
               <Send className="w-4 h-4" />
             </Button>
           </form>
@@ -150,16 +240,66 @@ export function ChatInterface() {
       </div>
 
       {/* Fixed chat input area at bottom */}
-      <div className="border-t p-4 bg-background flex-shrink-0">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <Input
+      <div className="border-t p-4 bg-background flex-shrink-0 space-y-4">
+        {/* Error display */}
+        {chatError && (
+          <div className="space-y-2">
+            {chatError.type === 'USAGE_LIMIT_EXCEEDED' && chatError.details ? (
+              <UsageLimitError
+                modelTier={chatError.details.modelTier}
+                resetTime={chatError.details.resetTime}
+              />
+            ) : (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
+                <div className="flex">
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                      Error
+                    </h3>
+                    <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                      {chatError.message}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="text-center">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setChatError(null)}
+                className="text-xs"
+              >
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        <form 
+          onSubmit={(e) => {
+            setChatError(null) // Clear errors on new submission
+            handleSubmit(e)
+          }} 
+          className="flex gap-2"
+        >
+          <Textarea
             value={input}
             onChange={handleInputChange}
             placeholder="Ask about your health data..."
-            className="flex-1"
-            disabled={isLoading}
+            className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                const form = e.currentTarget.form
+                if (form) {
+                  setChatError(null)
+                  handleSubmit(e as any)
+                }
+              }
+            }}
           />
-          <Button type="submit" disabled={!input.trim() || isLoading}>
+          <Button type="submit" disabled={!input.trim() || isLoading} className="self-end">
             <Send className="w-4 h-4" />
           </Button>
         </form>
