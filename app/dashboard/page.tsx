@@ -12,6 +12,7 @@ import { DeleteDataManager } from '@/components/dashboard/delete-data-manager'
 import BloodworkVisualizationCard from '@/components/dashboard/bloodwork-visualization-card'
 import GeneticSearchCard from '@/components/dashboard/genetic-search-card'
 import { ApiKeyManagement } from '@/components/dashboard/api-key-management'
+import { BloodworkDialog } from '@/components/dialogs/bloodwork-dialog'
 import { Toaster } from '@/components/ui/toaster'
 import { User, Settings, Upload, MessageSquare, Activity, Calendar, Ruler, Weight, TestTube } from 'lucide-react'
 import Link from 'next/link'
@@ -125,6 +126,16 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Need Bloodwork CTA */}
+            <div className="flex justify-center">
+              <BloodworkDialog 
+                triggerText="Need Bloodwork? Get comprehensive testing" 
+                triggerVariant="secondary" 
+                triggerSize="default" 
+                className="w-full sm:w-auto"
+              />
+            </div>
 
             {/* Demo Mode Alert */}
             {demoMode && (

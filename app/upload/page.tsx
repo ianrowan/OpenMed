@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ArrowLeft, Upload, Activity, Dna, Shield } from 'lucide-react'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { ArrowLeft, Upload, Activity, Dna, Shield, Info, Github } from 'lucide-react'
 import Link from 'next/link'
 import BloodworkUploader from '@/components/uploads/BloodworkUploader'
 import GeneticUploader from '@/components/uploads/GeneticUploader'
+import { BloodworkDialog } from '@/components/dialogs/bloodwork-dialog'
 import type { ParsedBloodwork } from '@/lib/parsers/bloodwork-parser'
 import type { ParsedGeneticData } from '@/lib/parsers/genetic-parser'
 
@@ -56,7 +58,7 @@ export default function UploadPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-4xl mx-auto pt-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Upload Medical Data</h1>
             <p className="mt-2 text-gray-600">
@@ -69,6 +71,50 @@ export default function UploadPage() {
               Back to Chat
             </Link>
           </Button>
+        </div>
+
+        {/* Privacy Dialog */}
+        <div className="mb-8 flex gap-3">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                Privacy Concerned?
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Host Locally for Complete Privacy</DialogTitle>
+                <DialogDescription className="space-y-3">
+                  Don't want to upload your medical data to the cloud? You can run OpenMed entirely on your own machine for complete data privacy.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="text-sm text-blue-800 font-medium mb-2">Self-hosting benefits:</div>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• Complete data privacy - never leaves your device</li>
+                    <li>• No usage limits or restrictions</li>
+                    <li>• Full control over your medical data</li>
+                    <li>• Works offline after initial setup</li>
+                  </ul>
+                </div>
+                <Button asChild className="w-full">
+                  <Link 
+                    href="https://github.com/ianrowan/OpenMed" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Github className="h-4 w-4" />
+                    View Setup Instructions on GitHub
+                  </Link>
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          
+          <BloodworkDialog />
         </div>
 
         {/* Success message */}

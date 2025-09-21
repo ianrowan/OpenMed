@@ -10,13 +10,13 @@ import { ChatMessage } from '@/components/chat/chat-message'
 import { ToolCallVisualization } from '@/components/chat/tool-call-visualization'
 import { ModelSelector } from '@/components/chat/model-selector'
 import { UsageLimitError } from '@/components/chat/usage-limit-error'
-import { FileUpload } from '@/components/data/file-upload'
 import { AIProcessingStages } from '@/components/ui/ai-processing'
+import { BloodworkDialog } from '@/components/dialogs/bloodwork-dialog'
 import { Send, Upload, Activity } from 'lucide-react'
+import Link from 'next/link'
 import { ModelType } from '@/lib/ai'
 
-export function ChatInterface() {
-  const [showUpload, setShowUpload] = useState(false)
+export default function ChatInterface() {
   const [selectedModel, setSelectedModel] = useState<ModelType>('gpt-4.1-mini')
   const [chatError, setChatError] = useState<{
     message: string
@@ -97,17 +97,19 @@ export function ChatInterface() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 max-w-2xl w-full">
-            <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setShowUpload(true)}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Upload className="w-5 h-5" />
-                  Upload Data
-                </CardTitle>
-                <CardDescription>
-                  Upload blood work, genetic test results, or other medical data
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <Link href="/upload">
+              <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Upload className="w-5 h-5" />
+                    Upload Data
+                  </CardTitle>
+                  <CardDescription>
+                    Upload blood work, genetic test results, or other medical data
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
 
             <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
               <CardHeader className="pb-3">
@@ -119,11 +121,9 @@ export function ChatInterface() {
             </Card>
           </div>
 
-          {showUpload && (
-            <div className="w-full max-w-2xl">
-              <FileUpload onUploadComplete={() => setShowUpload(false)} />
-            </div>
-          )}
+          <div className="mt-6">
+            <BloodworkDialog triggerText="Need Bloodwork? Get comprehensive testing" triggerSize="default" className="w-full sm:w-auto" />
+          </div>
         </div>
 
         {/* Fixed chat input area at bottom */}

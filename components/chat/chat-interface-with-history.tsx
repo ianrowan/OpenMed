@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ChatMessage } from '@/components/chat/chat-message'
 import { ToolCallVisualization } from '@/components/chat/tool-call-visualization'
 import { ModelSelector } from '@/components/chat/model-selector'
-import { FileUpload } from '@/components/data/file-upload'
 import { AIProcessingStages } from '@/components/ui/ai-processing'
 import { ChatSidebar } from '@/components/chat/chat-sidebar'
 import { UsageLimitError } from '@/components/chat/usage-limit-error'
@@ -17,6 +16,7 @@ import { CustomKeyBanner } from '@/components/chat/custom-key-indicator'
 import { useChatContext } from '@/components/chat/chat-context'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { BloodworkDialog } from '@/components/dialogs/bloodwork-dialog'
 import { Send, Upload, Activity, Menu, X, TestTube, LayoutDashboard } from 'lucide-react'
 import { ModelType } from '@/lib/ai'
 import { cn } from '@/lib/utils'
@@ -40,7 +40,6 @@ const convertChatMessageToUIMessage = (chatMessage: any): UIMessage => ({
 })
 
 export function ChatInterfaceWithHistory() {
-  const [showUpload, setShowUpload] = useState(false)
   const [selectedModel, setSelectedModel] = useState<ModelType>('gpt-4.1-mini')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [demoMode, setDemoMode] = useState(false)
@@ -251,17 +250,19 @@ export function ChatInterfaceWithHistory() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2 max-w-2xl w-full">
-                <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => setShowUpload(true)}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Upload className="w-5 h-5" />
-                      Upload Data
-                    </CardTitle>
-                    <CardDescription>
-                      Upload blood work, genetic test results, or other medical data
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
+                <Link href="/upload">
+                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Upload className="w-5 h-5" />
+                        Upload Data
+                      </CardTitle>
+                      <CardDescription>
+                        Upload blood work, genetic test results, or other medical data
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </Link>
 
                 <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
                   <CardHeader className="pb-3">
@@ -273,11 +274,9 @@ export function ChatInterfaceWithHistory() {
                 </Card>
               </div>
 
-              {showUpload && (
-                <div className="w-full max-w-2xl">
-                  <FileUpload onUploadComplete={() => setShowUpload(false)} />
-                </div>
-              )}
+              <div className="mt-6">
+                <BloodworkDialog triggerText="Need Bloodwork? Get comprehensive testing" triggerSize="default" className="w-full sm:w-auto" />
+              </div>
             </div>
 
             {/* Fixed chat input area at bottom */}
