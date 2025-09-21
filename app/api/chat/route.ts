@@ -11,6 +11,66 @@ import { checkUsageLimit, incrementUsage, formatUsageLimitError, MODEL_TIERS } f
 import { getUserOpenAIKey, updateApiKeyLastUsed } from '@/lib/user-api-key'
 import { createOpenAI } from '@ai-sdk/openai'
 
+// Helper function to format medical profile information
+function formatMedicalProfile(profile: any): string | null {
+  const profileParts: string[] = []
+
+  if (profile.age) {
+    profileParts.push(`Age: ${profile.age} years`)
+  }
+
+  if (profile.gender) {
+    profileParts.push(`Gender: ${profile.gender}`)
+  }
+
+  if (profile.weight) {
+    profileParts.push(`Weight: ${profile.weight} kg`)
+  }
+
+  if (profile.height) {
+    profileParts.push(`Height: ${profile.height} cm`)
+  }
+
+  if (profile.weight && profile.height) {
+    const heightInMeters = profile.height / 100
+    const bmi = (profile.weight / (heightInMeters * heightInMeters)).toFixed(1)
+    profileParts.push(`BMI: ${bmi}`)
+  }
+
+  if (profile.conditions && Array.isArray(profile.conditions) && profile.conditions.length > 0) {
+    profileParts.push(`Medical Conditions: ${profile.conditions.join(', ')}`)
+  }
+
+  if (profile.medications && Array.isArray(profile.medications) && profile.medications.length > 0) {
+    profileParts.push(`Current Medications: ${profile.medications.join(', ')}`)
+  }
+
+  if (profile.allergies && Array.isArray(profile.allergies) && profile.allergies.length > 0) {
+    profileParts.push(`Allergies: ${profile.allergies.join(', ')}`)
+  }
+
+  if (profile.family_history && Array.isArray(profile.family_history) && profile.family_history.length > 0) {
+    profileParts.push(`Family History: ${profile.family_history.join(', ')}`)
+  }
+
+  if (profile.lifestyle && typeof profile.lifestyle === 'object') {
+    const lifestyle = profile.lifestyle as Record<string, any>
+    const lifestyleItems: string[] = []
+    
+    if (lifestyle.smoking) lifestyleItems.push(`Smoking: ${lifestyle.smoking}`)
+    if (lifestyle.alcohol) lifestyleItems.push(`Alcohol: ${lifestyle.alcohol}`)
+    if (lifestyle.exercise) lifestyleItems.push(`Exercise: ${lifestyle.exercise}`)
+    if (lifestyle.diet) lifestyleItems.push(`Diet: ${lifestyle.diet}`)
+    if (lifestyle.sleep) lifestyleItems.push(`Sleep: ${lifestyle.sleep}`)
+    
+    if (lifestyleItems.length > 0) {
+      profileParts.push(`Lifestyle: ${lifestyleItems.join(', ')}`)
+    }
+  }
+
+  return profileParts.length > 0 ? profileParts.join('\n') : null
+}
+
 export async function POST(req: Request) {
   try {
     const { messages, model, conversation_id, demo_mode } = await req.json()
@@ -122,9 +182,31 @@ export async function POST(req: Request) {
     const geneticTool = new GeneticTool(supabase, demo_mode)
     const medicalSearchTool = new MedicalSearchTool()
 
+    // Get user's medical profile for new conversations (first message)
+    let systemPrompt = MEDICAL_AGENT_PROMPT
+    if (messages.length <= 1) { // First message in conversation
+      try {
+        const { data: medicalProfile } = await supabase
+          .from('medical_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+
+        if (medicalProfile) {
+          const profileInfo = formatMedicalProfile(medicalProfile)
+          if (profileInfo) {
+            systemPrompt = MEDICAL_AGENT_PROMPT + `\n\n=== USER MEDICAL PROFILE ===\n${profileInfo}\n\nUse this profile information to provide more personalized and relevant health insights. Consider the user's age, gender, current conditions, medications, and other factors when analyzing their data and providing recommendations.`
+          }
+        }
+      } catch (error) {
+        console.log('Could not fetch medical profile:', error)
+        // Continue without profile info if there's an error
+      }
+    }
+
     const result = streamText({
       model: selectedModel,
-      system: MEDICAL_AGENT_PROMPT,
+      system: systemPrompt,
       messages,
       maxSteps: 20, // Allow multiple tool execution steps
       tools: {
