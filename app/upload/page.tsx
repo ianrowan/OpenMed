@@ -64,9 +64,9 @@ export default function UploadPage() {
             </p>
           </div>
           <Button variant="outline" asChild>
-            <Link href="/dashboard" className="flex items-center gap-2">
+            <Link href="/chat" className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
+              Back to Chat
             </Link>
           </Button>
         </div>

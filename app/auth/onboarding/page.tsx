@@ -100,7 +100,7 @@ export default function OnboardingPage() {
       if (error) {
         setError(error.message)
       } else {
-        router.push('/dashboard')
+        router.push('/chat')
       }
     } catch (err) {
       setError('Failed to save profile. Please try again.')
@@ -110,7 +110,7 @@ export default function OnboardingPage() {
   }
 
   const handleSkip = () => {
-    router.push('/dashboard')
+    router.push('/chat')
   }
 
   const renderStep = () => {

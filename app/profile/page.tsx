@@ -96,10 +96,10 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-2xl mx-auto p-6">
         <div className="mb-6">
-          <Link href="/dashboard">
+          <Link href="/chat">
             <Button variant="ghost" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
+              Back to Chat
             </Button>
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">Medical Profile</h1>
@@ -229,7 +229,7 @@ export default function ProfilePage() {
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => router.push('/chat')}
                   className="flex-1"
                 >
                   Cancel

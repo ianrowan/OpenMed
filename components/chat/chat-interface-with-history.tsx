@@ -17,10 +17,11 @@ import { CustomKeyBanner } from '@/components/chat/custom-key-indicator'
 import { useChatContext } from '@/components/chat/chat-context'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Send, Upload, Activity, Menu, X, TestTube } from 'lucide-react'
+import { Send, Upload, Activity, Menu, X, TestTube, LayoutDashboard } from 'lucide-react'
 import { ModelType } from '@/lib/ai'
 import { cn } from '@/lib/utils'
 import type { Message as UIMessage } from 'ai'
+import Link from 'next/link'
 
 // Utility functions to convert between UI messages and ChatMessage types
 const convertUIMessageToChatMessage = (uiMessage: UIMessage): any => ({
@@ -195,6 +196,12 @@ export function ChatInterfaceWithHistory() {
                   <h1 className="text-lg font-semibold">OpenMed AI Chat</h1>
                 </div>
                 <div className="flex items-center gap-4">
+                  <Link href="/dashboard">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                      <LayoutDashboard className="w-4 h-4" />
+                      <span className="hidden sm:inline">Dashboard</span>
+                    </Button>
+                  </Link>
                   <div className="flex items-center gap-2">
                     <TestTube className="w-4 h-4 text-muted-foreground" />
                     <Label htmlFor="demo-mode" className="text-sm">Demo Mode</Label>
@@ -347,11 +354,19 @@ export function ChatInterfaceWithHistory() {
                     {currentConversation?.title || 'OpenMed AI Chat'}
                   </h1>
                 </div>
-                <ModelSelector
-                  selectedModel={selectedModel}
-                  onModelChange={setSelectedModel}
-                  disabled={isLoading}
-                />
+                <div className="flex items-center gap-2">
+                  <Link href="/dashboard">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                      <LayoutDashboard className="w-4 h-4" />
+                      <span className="hidden sm:inline">Dashboard</span>
+                    </Button>
+                  </Link>
+                  <ModelSelector
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
+                    disabled={isLoading}
+                  />
+                </div>
               </div>
             </div>
 
