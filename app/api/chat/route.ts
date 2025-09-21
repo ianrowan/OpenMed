@@ -8,28 +8,14 @@ import { MedicalSearchTool } from '@/lib/tools/medical-search-tool'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { checkUsageLimit, incrementUsage, formatUsageLimitError, MODEL_TIERS } from '@/lib/usage-limits'
+import { getUserOpenAIKey, updateApiKeyLastUsed } from '@/lib/user-api-key'
+import { createOpenAI } from '@ai-sdk/openai'
 
 export async function POST(req: Request) {
   try {
     const { messages, model, conversation_id, demo_mode } = await req.json()
 
-    // Get the AI model based on the request or use default
-    const selectedModel = getAIModel(model) || aiModel
-
-    // If no AI model is configured, return a demo response
-    if (!selectedModel) {
-      return new Response(
-        JSON.stringify({
-          role: 'assistant',
-          content: 'OpenMed AI is running in demo mode. To enable full chat functionality, please add your OpenAI API key to the .env.local file. In the meantime, you can upload medical data and explore the visualizations!'
-        }),
-        {
-          headers: { 'Content-Type': 'application/json' }
-        }
-      )
-    }
-
-    // Create Supabase client with auth session
+    // Create Supabase client with auth session first for user authentication
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,31 +39,66 @@ export async function POST(req: Request) {
       )
     }
 
-    // Check usage limits for the selected model
-    const usageCheck = await checkUsageLimit(supabase, user.id, model || 'gpt-4.1-mini')
-    if (!usageCheck.allowed) {
-      const modelTier = MODEL_TIERS[model || 'gpt-4.1-mini']
-      const errorMessage = usageCheck.error || formatUsageLimitError(
-        modelTier,
-        usageCheck.currentUsage,
-        usageCheck.limit,
-        usageCheck.resetTime
-      )
+    // Check if user has a custom OpenAI API key
+    const userApiKeyResult = await getUserOpenAIKey()
+    const usingCustomKey = userApiKeyResult.hasCustomKey && userApiKeyResult.apiKey
+
+    let selectedModel;
+    let shouldCheckUsage = true;
+
+    if (usingCustomKey) {
+      // User has custom key - create model with their key and bypass usage limits
+      const customOpenAI = createOpenAI({
+        apiKey: userApiKeyResult.apiKey
+      })
+      selectedModel = customOpenAI(model || 'gpt-4.1-mini')
+      shouldCheckUsage = false;
+      console.log('Using custom OpenAI API key for user:', user.id)
+    } else {
+      // Use system API key and check usage limits
+      selectedModel = getAIModel(model) || aiModel
       
-      return new Response(
-        JSON.stringify({ 
-          error: errorMessage,
-          type: 'USAGE_LIMIT_EXCEEDED',
-          currentUsage: usageCheck.currentUsage,
-          limit: usageCheck.limit,
-          resetTime: usageCheck.resetTime.toISOString(),
-          modelTier
-        }),
-        { 
-          status: 429, // Too Many Requests
-          headers: { 'Content-Type': 'application/json' }
-        }
-      )
+      // If no system AI model is configured, return a demo response
+      if (!selectedModel) {
+        return new Response(
+          JSON.stringify({
+            role: 'assistant',
+            content: 'OpenMed AI is running in demo mode. To enable full chat functionality, please add your OpenAI API key to the .env.local file or configure your own API key in your account settings. In the meantime, you can upload medical data and explore the visualizations!'
+          }),
+          {
+            headers: { 'Content-Type': 'application/json' }
+          }
+        )
+      }
+    }
+
+    // Check usage limits only if using system API key
+    if (shouldCheckUsage) {
+      const usageCheck = await checkUsageLimit(supabase, user.id, model || 'gpt-4.1-mini')
+      if (!usageCheck.allowed) {
+        const modelTier = MODEL_TIERS[model || 'gpt-4.1-mini']
+        const errorMessage = usageCheck.error || formatUsageLimitError(
+          modelTier,
+          usageCheck.currentUsage,
+          usageCheck.limit,
+          usageCheck.resetTime
+        )
+        
+        return new Response(
+          JSON.stringify({ 
+            error: errorMessage,
+            type: 'USAGE_LIMIT_EXCEEDED',
+            currentUsage: usageCheck.currentUsage,
+            limit: usageCheck.limit,
+            resetTime: usageCheck.resetTime.toISOString(),
+            modelTier
+          }),
+          { 
+            status: 429, // Too Many Requests
+            headers: { 'Content-Type': 'application/json' }
+          }
+        )
+      }
     }
 
     // Save the user message immediately if conversation_id is provided
@@ -137,8 +158,13 @@ export async function POST(req: Request) {
             })
         }
         
-        // Increment usage count after successful completion
-        await incrementUsage(supabase, user.id, model || 'gpt-4.1-mini')
+        if (usingCustomKey) {
+          // Update last used timestamp for custom API key
+          await updateApiKeyLastUsed()
+        } else {
+          // Only increment system usage count if using system API key
+          await incrementUsage(supabase, user.id, model || 'gpt-4.1-mini')
+        }
       }
     })
 

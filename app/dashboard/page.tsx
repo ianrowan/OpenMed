@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DeleteDataManager } from '@/components/dashboard/delete-data-manager'
 import BloodworkVisualizationCard from '@/components/dashboard/bloodwork-visualization-card'
 import GeneticSearchCard from '@/components/dashboard/genetic-search-card'
+import { ApiKeyManagement } from '@/components/dashboard/api-key-management'
 import { Toaster } from '@/components/ui/toaster'
 import { User, Settings, Upload, MessageSquare, Activity, Calendar, Ruler, Weight, TestTube } from 'lucide-react'
 import Link from 'next/link'
@@ -234,6 +235,9 @@ export default function DashboardPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* API Key Management */}
+            <ApiKeyManagement />
 
             {/* Delete Data Manager */}
             <DeleteDataManager />

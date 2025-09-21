@@ -13,6 +13,7 @@ import { FileUpload } from '@/components/data/file-upload'
 import { AIProcessingStages } from '@/components/ui/ai-processing'
 import { ChatSidebar } from '@/components/chat/chat-sidebar'
 import { UsageLimitError } from '@/components/chat/usage-limit-error'
+import { CustomKeyBanner } from '@/components/chat/custom-key-indicator'
 import { useChatContext } from '@/components/chat/chat-context'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -213,6 +214,9 @@ export function ChatInterfaceWithHistory() {
               </div>
             </div>
 
+            {/* Custom API Key Banner */}
+            <CustomKeyBanner />
+
             {/* Welcome content area */}
             <div className="flex-1 flex flex-col items-center justify-center space-y-6 p-4 min-h-0">
               <div className="text-center space-y-4">
@@ -350,6 +354,9 @@ export function ChatInterfaceWithHistory() {
                 />
               </div>
             </div>
+
+            {/* Custom API Key Banner */}
+            <CustomKeyBanner />
 
             {/* Scrollable messages area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">

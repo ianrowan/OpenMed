@@ -132,6 +132,18 @@ CREATE TABLE public.daily_usage_limits (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- User OpenAI API keys for custom usage (bypasses limits)
+CREATE TABLE public.user_api_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  encrypted_api_key TEXT NOT NULL,
+  key_name TEXT DEFAULT 'OpenAI API Key',
+  is_active BOOLEAN DEFAULT true,
+  last_used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Unique constraint to ensure one record per user per tier per day
 CREATE UNIQUE INDEX idx_daily_usage_user_tier_date ON public.daily_usage_limits(user_id, model_tier, date);
 
@@ -167,6 +179,9 @@ CREATE INDEX idx_daily_usage_limits_user_id ON public.daily_usage_limits(user_id
 CREATE INDEX idx_daily_usage_limits_date ON public.daily_usage_limits(date DESC);
 CREATE INDEX idx_daily_usage_limits_tier ON public.daily_usage_limits(model_tier);
 CREATE INDEX idx_daily_usage_limits_user_date ON public.daily_usage_limits(user_id, date);
+
+CREATE INDEX idx_user_api_keys_user_id ON public.user_api_keys(user_id);
+CREATE INDEX idx_user_api_keys_is_active ON public.user_api_keys(is_active);
 
 -- Updated at triggers
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
@@ -205,6 +220,10 @@ CREATE TRIGGER set_updated_at_daily_usage_limits
   BEFORE UPDATE ON public.daily_usage_limits
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+CREATE TRIGGER set_updated_at_user_api_keys
+  BEFORE UPDATE ON public.user_api_keys
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
 -- ============================================================
 
 -- STEP 3: ROW LEVEL SECURITY POLICIES
@@ -224,6 +243,7 @@ ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.medical_literature ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_usage_limits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_api_keys ENABLE ROW LEVEL SECURITY;
 
 -- Users policies
 CREATE POLICY "Users can view own profile" ON public.users
@@ -333,6 +353,23 @@ CREATE POLICY "Block direct user updates" ON public.daily_usage_limits
 CREATE POLICY "Service role can manage usage limits" ON public.daily_usage_limits
   FOR ALL TO service_role USING (true);
 
+-- User API keys policies
+CREATE POLICY "Users can view own API keys" ON public.user_api_keys
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own API keys" ON public.user_api_keys
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own API keys" ON public.user_api_keys
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own API keys" ON public.user_api_keys
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Service role can access all keys for API usage
+CREATE POLICY "Service role can manage all API keys" ON public.user_api_keys
+  FOR ALL TO service_role USING (true);
+
 -- ============================================================
 
 -- STEP 4: DATABASE FUNCTIONS
@@ -418,48 +455,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Function to search genetic variants
-CREATE OR REPLACE FUNCTION public.search_genetic_variants(
-  user_uuid UUID,
-  search_terms TEXT[] DEFAULT NULL,
-  gene_names TEXT[] DEFAULT NULL
-)
-RETURNS TABLE (
-  rsid TEXT,
-  chromosome TEXT,
-  "position" BIGINT,
-  genotype TEXT,
-  gene TEXT,
-  annotation JSONB
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT 
-    (snp->>'rsid')::TEXT as rsid,
-    (snp->>'chromosome')::TEXT as chromosome,
-    (snp->>'position')::BIGINT as "position",
-    (snp->>'genotype')::TEXT as genotype,
-    (snp->>'gene')::TEXT as gene,
-    (snp->'annotation')::JSONB as annotation
-  FROM public.genetic_data gd,
-       jsonb_array_elements(gd.snps) as snp
-  WHERE gd.user_id = user_uuid
-    AND (
-      search_terms IS NULL OR
-      EXISTS (
-        SELECT 1 FROM unnest(search_terms) as term
-        WHERE snp->>'rsid' ILIKE '%' || term || '%'
-           OR snp->>'gene' ILIKE '%' || term || '%'
-           OR snp->'annotation'->>'phenotype' ILIKE '%' || term || '%'
-      )
-    )
-    AND (
-      gene_names IS NULL OR
-      snp->>'gene' = ANY(gene_names)
-    );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Function to clean up expired medical literature cache
 CREATE OR REPLACE FUNCTION public.cleanup_expired_literature()
 RETURNS INTEGER AS $$
@@ -512,6 +507,7 @@ BEGIN
   -- Get overall statistics
   SELECT 
     AVG((biomarker->>'value')::NUMERIC),
+    MIN((biomarker->>'value')::NUMERIC),
     MAX((biomarker->>'value')::NUMERIC)
   INTO avg_val, min_val, max_val
   FROM public.blood_test_results btr,
@@ -525,6 +521,29 @@ BEGIN
   FROM public.blood_test_results btr,
        jsonb_array_elements(btr.biomarkers) as biomarker
   WHERE btr.user_id = user_uuid
+    AND biomarker->>'name' ILIKE biomarker_name
+    AND btr.test_date >= (CURRENT_DATE - INTERVAL '90 days');
+    
+  -- Calculate older average (90-180 days ago)
+  SELECT AVG((biomarker->>'value')::NUMERIC)
+  INTO older_avg
+  FROM public.blood_test_results btr,
+       jsonb_array_elements(btr.biomarkers) as biomarker
+  WHERE btr.user_id = user_uuid
+    AND biomarker->>'name' ILIKE biomarker_name
+    AND btr.test_date BETWEEN (CURRENT_DATE - INTERVAL '180 days') AND (CURRENT_DATE - INTERVAL '90 days');
+
+  -- Determine trend direction
+  IF recent_avg IS NULL OR older_avg IS NULL THEN
+    trend := 'insufficient_data';
+  ELSIF recent_avg > older_avg * 1.1 THEN
+    trend := 'increasing';
+  ELSIF recent_avg < older_avg * 0.9 THEN
+    trend := 'decreasing';
+  ELSE
+    trend := 'stable';
+  END IF;
+
   RETURN QUERY SELECT latest_val, latest_dt, avg_val, min_val, max_val, trend;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -653,44 +672,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- ---------------------------------------------------------------
---  Function : get_latest_genetic_data
---  Purpose  : Return the newest row for a given user, but keep only the
---             variants whose rsid appears in the supplied array.
--- ---------------------------------------------------------------
-create or replace function public.get_latest_genetic_data(
-    p_user_id   uuid,        -- the user we are interested in
-    p_rsid_list text[]       -- array of rs‑ids to keep
-)
-returns table (
-    id          uuid,
-    user_id     uuid,
-    source      text,
-    uploaded_at timestamptz,
-    snps_filt        jsonb         -- JSONB object { "variants": [ … ] }
-)
-language sql
-security definer                     -- runs with the owner's privileges
-as $$
-    select
-        gd.id,
-        gd.user_id,
-        gd.source,
-        gd.uploaded_at,
-        jsonb_build_object(
-            'variants',
-            (
-                select jsonb_agg(v)
-                from jsonb_array_elements(gd.snps -> 'variants') as v
-                where v ->> 'rsid' = any(p_rsid_list)        -- ← filter
-            )
-        ) as snps_filt
-    from genetic_data gd
-    where gd.user_id = p_user_id
-    order by gd.uploaded_at desc
-    limit 1;                               -- only the latest row
-$$;
-
 -- Function to increment daily usage for a user and model tier
 CREATE OR REPLACE FUNCTION public.increment_usage(
     p_user_id UUID,
@@ -724,5 +705,53 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Revoke public access and grant only to service_role
 REVOKE EXECUTE ON FUNCTION public.increment_usage FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.increment_usage TO service_role;
+
+-- Function to encrypt API key (basic encryption - in production use proper encryption)
+CREATE OR REPLACE FUNCTION public.encrypt_api_key(api_key TEXT)
+RETURNS TEXT AS $$
+BEGIN
+  -- Simple base64 encoding for demo - use proper encryption in production
+  -- In production, use pgcrypto extension with proper symmetric encryption
+  RETURN encode(api_key::bytea, 'base64');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to decrypt API key
+CREATE OR REPLACE FUNCTION public.decrypt_api_key(encrypted_key TEXT)
+RETURNS TEXT AS $$
+BEGIN
+  -- Simple base64 decoding for demo - use proper decryption in production
+  RETURN convert_from(decode(encrypted_key, 'base64'), 'UTF8');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to get user's active API key (for server-side usage)
+CREATE OR REPLACE FUNCTION public.get_user_api_key(p_user_id UUID)
+RETURNS TEXT AS $$
+DECLARE
+  encrypted_key TEXT;
+BEGIN
+  SELECT encrypted_api_key INTO encrypted_key
+  FROM public.user_api_keys
+  WHERE user_id = p_user_id AND is_active = true
+  LIMIT 1;
+  
+  IF encrypted_key IS NOT NULL THEN
+    -- Update last_used_at
+    UPDATE public.user_api_keys
+    SET last_used_at = NOW()
+    WHERE user_id = p_user_id AND is_active = true;
+    
+    RETURN public.decrypt_api_key(encrypted_key);
+  END IF;
+  
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Grant execute permissions to service role for API key functions
+GRANT EXECUTE ON FUNCTION public.encrypt_api_key TO service_role;
+GRANT EXECUTE ON FUNCTION public.decrypt_api_key TO service_role;
+GRANT EXECUTE ON FUNCTION public.get_user_api_key TO service_role;
 
 -- ============================================================
