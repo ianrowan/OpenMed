@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerComponentClient } from '@/lib/supabase'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 const UploadRequestSchema = z.object({
   data: z.object({
@@ -55,7 +56,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (insertError) {
-      console.error('Database insert error:', insertError)
+      logger.error('Database insert error', { 
+        error: insertError.message, 
+        userId: user.id 
+      })
       return NextResponse.json(
         { error: 'Failed to save blood test results' },
         { status: 500 }
@@ -63,7 +67,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the upload
-    console.log(`Blood test uploaded for user ${user.id}: ${fileName} (${fileSize} bytes)`)
+    logger.info('Blood test uploaded successfully', { 
+      fileName, 
+      fileSize, 
+      userId: user.id 
+    })
 
     return NextResponse.json({
       success: true,
@@ -76,7 +84,9 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Blood test upload error:', error)
+    logger.error('Blood test upload error', { 
+      error: error instanceof Error ? error.message : String(error) 
+    })
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

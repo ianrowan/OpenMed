@@ -76,23 +76,27 @@ export default function SignInPage() {
             <div className="grid grid-cols-2 gap-3">
               <Button
                 variant="outline"
-                onClick={() => handleOAuthSignIn('google')}
-                disabled={loading}
-                className="w-full"
+                disabled={true}
+                className="w-full opacity-50 cursor-not-allowed"
+                title="Google sign-in temporarily disabled"
               >
                 <Chrome className="mr-2 h-4 w-4" />
                 Google
               </Button>
               <Button
                 variant="outline"
-                onClick={() => handleOAuthSignIn('apple')}
-                disabled={loading}
-                className="w-full"
+                disabled={true}
+                className="w-full opacity-50 cursor-not-allowed"
+                title="Apple sign-in temporarily disabled"
               >
                 <Apple className="mr-2 h-4 w-4" />
                 Apple
               </Button>
             </div>
+
+            <p className="text-xs text-muted-foreground text-center">
+              Social sign-in options temporarily disabled
+            </p>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useChat } from 'ai/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +20,7 @@ import { BloodworkDialog } from '@/components/dialogs/bloodwork-dialog'
 import { Send, Upload, Activity, Menu, X, TestTube, LayoutDashboard } from 'lucide-react'
 import { ModelType } from '@/lib/ai'
 import { cn } from '@/lib/utils'
+import { Analytics } from '@/lib/analytics'
 import type { Message as UIMessage } from 'ai'
 import Link from 'next/link'
 
@@ -48,6 +49,13 @@ export function ChatInterfaceWithHistory() {
     type?: string
     details?: any
   } | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  
+  // Wrapper function to track model changes
+  const handleModelChange = (newModel: ModelType) => {
+    Analytics.modelChanged(selectedModel, newModel)
+    setSelectedModel(newModel)
+  }
   
   const {
     currentConversation,
@@ -114,6 +122,13 @@ export function ChatInterfaceWithHistory() {
     }
   })
 
+  // Auto-scroll to bottom when messages change or when loading
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages, isLoading])
+
   // Load conversation messages when current conversation changes
   useEffect(() => {
     if (currentConversation?.messages) {
@@ -141,6 +156,9 @@ export function ChatInterfaceWithHistory() {
     
     // Clear any existing errors when submitting new message
     setChatError(null)
+    
+    // Track chat message analytics
+    Analytics.chatMessage(selectedModel)
     
     // If no current conversation, create one first
     if (!currentConversation) {
@@ -213,7 +231,7 @@ export function ChatInterfaceWithHistory() {
                   </div>
                   <ModelSelector
                     selectedModel={selectedModel}
-                    onModelChange={setSelectedModel}
+                    onModelChange={handleModelChange}
                     disabled={isLoading}
                   />
                 </div>
@@ -362,7 +380,7 @@ export function ChatInterfaceWithHistory() {
                   </Link>
                   <ModelSelector
                     selectedModel={selectedModel}
-                    onModelChange={setSelectedModel}
+                    onModelChange={handleModelChange}
                     disabled={isLoading}
                   />
                 </div>
@@ -399,6 +417,9 @@ export function ChatInterfaceWithHistory() {
                   <AIProcessingStages />
                 </div>
               )}
+              
+              {/* Auto-scroll target */}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Fixed chat input area at bottom */}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Upload, FileText, CheckCircle, AlertCircle, XCircle, Dna, Shield, Pill, Heart } from 'lucide-react'
 import { useAuth } from '@/lib/auth/AuthContext'
+import { Analytics } from '@/lib/analytics'
 import { 
   parseGeneticData, 
   parseRawGeneticData,
@@ -30,22 +31,63 @@ export default function GeneticUploader({ onUploadComplete }: GeneticUploaderPro
   const [success, setSuccess] = useState(false)
   const [parsedData, setParsedData] = useState<ParsedGeneticData | null>(null)
   const [riskAssessment, setRiskAssessment] = useState<ReturnType<typeof getClinicalRiskAssessment> | null>(null)
+  
+  // Progress animation state
+  const [isProcessingComplete, setIsProcessingComplete] = useState(false)
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const startTimeRef = useRef<number>(0)
+
+  // Gradual progress animation over 15 seconds to 99%
+  useEffect(() => {
+    if (uploading && !isProcessingComplete) {
+      startTimeRef.current = Date.now()
+      progressIntervalRef.current = setInterval(() => {
+        const elapsed = Date.now() - startTimeRef.current
+        const duration = 15000 // 15 seconds
+        
+        if (elapsed < duration) {
+          // Gradual progress from 0 to 99% over 15 seconds using easeOut curve
+          const progress = Math.min(99, (elapsed / duration) * 99)
+          const easedProgress = 99 * (1 - Math.pow(1 - progress / 99, 3)) // Cubic ease-out
+          setUploadProgress(Math.floor(easedProgress))
+        } else {
+          // Stay at 99% until processing is complete
+          setUploadProgress(99)
+        }
+      }, 100) // Update every 100ms for smooth animation
+      
+      return () => {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current)
+        }
+      }
+    }
+  }, [uploading, isProcessingComplete])
+
+  // Clean up interval when component unmounts
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
+    }
+  }, [])
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
     if (!file) return
 
     setError(null)
+    setSuccess(false)
     setUploading(true)
     setUploadProgress(0)
+    setIsProcessingComplete(false)
 
     try {
-      // Validate file
-      setUploadProgress(20)
+      // Validate file (let progress animation run in background)
       const content = await validateGeneticFile(file)
 
       // Parse data for display
-      setUploadProgress(50)
       const parsedGenetic = parseGeneticData(content, '23andme')
       setParsedData(parsedGenetic)
 
@@ -57,7 +99,6 @@ export default function GeneticUploader({ onUploadComplete }: GeneticUploaderPro
       setRiskAssessment(assessment)
 
       // Upload to server - send only raw data for storage
-      setUploadProgress(75)
       const response = await fetch('/api/upload/genetic', {
         method: 'POST',
         headers: {
@@ -73,10 +114,24 @@ export default function GeneticUploader({ onUploadComplete }: GeneticUploaderPro
         throw new Error(errorData.error || 'Upload failed')
       }
 
+      // Mark processing as complete and immediately set to 100%
+      setIsProcessingComplete(true)
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
       setUploadProgress(100)
       setSuccess(true)
+      
+      // Track successful genetic data upload
+      Analytics.dataUpload('genetic')
+      
       onUploadComplete?.(parsedGenetic)
     } catch (err) {
+      // Clear the progress animation on error
+      setIsProcessingComplete(true)
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
       setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
       setUploading(false)

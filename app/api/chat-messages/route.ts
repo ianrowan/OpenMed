@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
+import { logger } from '@/lib/logger'
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     return Response.json({ message })
   } catch (error) {
-    console.error('Error saving chat message:', error)
+    logger.error('Error saving chat message', { error: error instanceof Error ? error.message : String(error) })
     return Response.json(
       { error: 'Failed to save chat message' },
       { status: 500 }

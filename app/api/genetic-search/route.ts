@@ -2,6 +2,7 @@ import { createServerComponentClient } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
+import { logger } from '@/lib/logger'
 
 // Load clinical SNPs database
 let clinicalSnpsData: any = null
@@ -13,7 +14,7 @@ async function loadClinicalSnps() {
       const fileContents = await readFile(filePath, 'utf8')
       clinicalSnpsData = JSON.parse(fileContents)
     } catch (error) {
-      console.warn('Clinical SNPs database not found, proceeding without clinical annotations')
+      logger.warn('Clinical SNPs database not found, proceeding without clinical annotations')
       clinicalSnpsData = {}
     }
   }
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
         .order('rsid')
 
       if (error) {
-        console.error('Demo genetic search error:', error)
+        logger.error('Demo genetic search error', { error: error instanceof Error ? error.message : String(error) })
         return NextResponse.json(
           { error: 'Failed to search demo genetic variants' },
           { status: 500 }
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest) {
       .order('rsid')
 
     if (error) {
-      console.error('Genetic search error:', error)
+      logger.error('Genetic search error', { error: error instanceof Error ? error.message : String(error) })
       return NextResponse.json(
         { error: 'Failed to search genetic variants' },
         { status: 500 }
@@ -127,7 +128,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: enhancedResults })
   } catch (error) {
-    console.error('Unexpected error in genetic search API:', error)
+    logger.error('Unexpected error in genetic search API', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

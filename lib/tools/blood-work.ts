@@ -22,17 +22,14 @@ export class BloodWorkTool {
       let query
       
       if (this.demoMode) {
-        console.log('Querying demo blood test results (DEMO MODE)...')
-        
+
         query = this.supabase
           .from('demo_blood_test_results')
           .select('*')
           .order('test_date', { ascending: false })
       } else {
         const userId = await this.getCurrentUserId()
-        
-        console.log(`Querying blood test results for user ${userId}...`)
-        
+      
         query = this.supabase
           .from('blood_test_results')
           .select('*')
@@ -58,8 +55,6 @@ export class BloodWorkTool {
       
       const { data, error } = await query
 
-      console.log('Blood test query result:', { data, error, dataLength: data?.length })
-
       if (error) throw error
 
       // Map data from the blood_test_results table to our BloodTestResult type
@@ -82,15 +77,14 @@ export class BloodWorkTool {
         uploaded_at: row.uploaded_at
       }))
       
-      console.log('Transformed blood tests:', { count: bloodTests.length, firstTest: bloodTests[0] })
-      
+
       // Transform data from upload format to internal BloodTestResult format
       // The upload route stores biomarkers with different field names than our internal types
       let filteredTests = bloodTests;
       
       // Post-query filter by specific markers if needed
       if (params.markers) {
-        console.log('Filtering by markers:', params.markers)
+
         filteredTests = bloodTests.map(test => ({
           ...test,
           biomarkers: test.biomarkers.filter(marker => 
@@ -102,8 +96,7 @@ export class BloodWorkTool {
             })
           )
         })).filter(test => test.biomarkers.length > 0);
-        console.log('After marker filtering:', { count: filteredTests.length })
-      }
+}
       
       // Filter out-of-range only
       if (params.out_of_range_only) {
@@ -117,12 +110,6 @@ export class BloodWorkTool {
 
       const summary = this.generateBloodWorkSummary(filteredTests)
       const visualization = this.createBloodWorkVisualization(filteredTests)
-
-      console.log('Final blood work result:', { 
-        testsCount: filteredTests.length, 
-        summary: summary.substring(0, 100) + '...',
-        hasVisualization: !!visualization 
-      })
 
       return {
         data: {
@@ -224,7 +211,6 @@ export class BloodWorkTool {
     }
     
     try {
-      console.log('Getting user authentication...')
       
       // Add a timeout to prevent hanging
       const authPromise = this.supabase.auth.getUser()
@@ -235,19 +221,15 @@ export class BloodWorkTool {
       const { data: { user }, error } = await Promise.race([authPromise, timeoutPromise]) as any
       
       if (error) {
-        console.log('Auth error, using demo user:', error)
         return 'demo-user'
       }
       
       if (!user) {
-        console.log('No user found, using demo user')
         return 'demo-user'
       }
       
-      console.log('User authenticated:', user.id)
       return user.id
     } catch (error) {
-      console.log('Auth failed, using demo user:', error)
       return 'demo-user'
     }
   }

@@ -1,5 +1,6 @@
 import { createServerComponentClient } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
         .order('test_date', { ascending: false })
 
       if (error) {
-        console.error('Demo blood test results error:', error)
+        logger.error('Demo blood test results error', { error: error instanceof Error ? error.message : String(error) })
         return NextResponse.json(
           { error: 'Failed to fetch demo blood test results' },
           { status: 500 }
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
       .order('test_date', { ascending: false })
 
     if (error) {
-      console.error('Blood test results error:', error)
+      logger.error('Blood test results error', { error: error instanceof Error ? error.message : String(error) })
       return NextResponse.json(
         { error: 'Failed to fetch blood test results' },
         { status: 500 }
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: data || [] })
   } catch (error) {
-    console.error('Unexpected error in blood test results API:', error)
+    logger.error('Unexpected error in blood test results API', { error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

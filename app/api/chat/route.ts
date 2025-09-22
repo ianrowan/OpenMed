@@ -10,6 +10,7 @@ import { cookies } from 'next/headers'
 import { checkUsageLimit, incrementUsage, formatUsageLimitError, MODEL_TIERS } from '@/lib/usage-limits'
 import { getUserOpenAIKey, updateApiKeyLastUsed } from '@/lib/user-api-key'
 import { createOpenAI } from '@ai-sdk/openai'
+import { logger } from '@/lib/logger'
 
 // Helper function to format medical profile information
 function formatMedicalProfile(profile: any): string | null {
@@ -72,10 +73,11 @@ function formatMedicalProfile(profile: any): string | null {
 }
 
 export async function POST(req: Request) {
+  let user: any = null
+  
   try {
-    const { messages, model, conversation_id, demo_mode } = await req.json()
+    const { messages, model, demo, conversation_id, demo_mode } = await req.json()
 
-    // Create Supabase client with auth session first for user authentication
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -90,7 +92,8 @@ export async function POST(req: Request) {
     )
 
     // Get the current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { data: { user: authenticatedUser }, error: authError } = await supabase.auth.getUser()
+    user = authenticatedUser
     
     if (authError || !user) {
       return new Response(
@@ -113,7 +116,7 @@ export async function POST(req: Request) {
       })
       selectedModel = customOpenAI(model || 'gpt-4.1-mini')
       shouldCheckUsage = false;
-      console.log('Using custom OpenAI API key for user:', user.id)
+      logger.debug('Using custom API key', { userId: user.id, action: 'custom_key_used' })
     } else {
       // Use system API key and check usage limits
       selectedModel = getAIModel(model) || aiModel
@@ -199,7 +202,7 @@ export async function POST(req: Request) {
           }
         }
       } catch (error) {
-        console.log('Could not fetch medical profile:', error)
+        logger.debug('Medical profile fetch failed', { userId: user.id, action: 'profile_fetch_error' })
         // Continue without profile info if there's an error
       }
     }
@@ -253,7 +256,11 @@ export async function POST(req: Request) {
     return result.toDataStreamResponse()
 
   } catch (error) {
-    console.error('Chat API error:', error)
+    logger.error('Chat API request failed', error, { 
+      endpoint: '/api/chat',
+      userId: user?.id,
+      action: 'chat_request'
+    })
     return new Response(
       JSON.stringify({ 
         error: 'Failed to process chat request',

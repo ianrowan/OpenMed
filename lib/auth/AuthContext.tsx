@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase'
 import { MedicalProfile, MedicalProfileFormData } from '@/types'
+import { Analytics } from '@/lib/analytics'
 import { resolve } from 'path'
 
 interface AuthContextType {
@@ -149,6 +150,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
     })
+    
+    // Track successful sign up
+    if (!error) {
+      Analytics.userSignUp('email')
+    }
+    
     return { error }
   }
 
@@ -157,6 +164,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
     })
+    
+    // Track successful sign in
+    if (!error) {
+      Analytics.userSignIn('email')
+    }
     return { error }
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   try {
@@ -33,7 +34,7 @@ export async function GET() {
       .single()
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-      console.error('Error fetching API key:', error)
+      logger.error('Error fetching API key', { error: error.message, code: error.code, userId: user.id })
       return Response.json({ error: 'Failed to fetch API key' }, { status: 500 })
     }
 
@@ -42,7 +43,7 @@ export async function GET() {
       keyInfo: data || null
     })
   } catch (error) {
-    console.error('API key fetch error:', error)
+    logger.error('API key fetch error', { error: error instanceof Error ? error.message : String(error) })
     return Response.json(
       { error: 'Failed to fetch API key information' },
       { status: 500 }
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
       .rpc('encrypt_api_key', { api_key: apiKey })
 
     if (encryptError) {
-      console.error('Error encrypting API key:', encryptError)
+      logger.error('Error encrypting API key', { error: encryptError.message, userId: user.id })
       return Response.json({ error: 'Failed to encrypt API key' }, { status: 500 })
     }
 
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (insertError) {
-      console.error('Error storing API key:', insertError)
+      logger.error('Error storing API key', { error: insertError.message, userId: user.id })
       return Response.json({ error: 'Failed to store API key' }, { status: 500 })
     }
 
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
       message: 'API key saved successfully' 
     })
   } catch (error) {
-    console.error('API key save error:', error)
+    logger.error('API key save error', { error: error instanceof Error ? error.message : String(error) })
     return Response.json(
       { error: 'Failed to save API key' },
       { status: 500 }
@@ -147,7 +148,7 @@ export async function DELETE() {
       .eq('user_id', user.id)
 
     if (error) {
-      console.error('Error deleting API key:', error)
+      logger.error('Error deleting API key', { error: error.message, userId: user.id })
       return Response.json({ error: 'Failed to delete API key' }, { status: 500 })
     }
 
@@ -156,7 +157,7 @@ export async function DELETE() {
       message: 'API key deleted successfully' 
     })
   } catch (error) {
-    console.error('API key delete error:', error)
+    logger.error('API key delete error', { error: error instanceof Error ? error.message : String(error) })
     return Response.json(
       { error: 'Failed to delete API key' },
       { status: 500 }

@@ -123,23 +123,27 @@ export default function SignUpPage() {
             <div className="grid grid-cols-2 gap-3">
               <Button
                 variant="outline"
-                onClick={() => handleOAuthSignUp('google')}
-                disabled={loading}
-                className="w-full"
+                disabled={true}
+                className="w-full opacity-50 cursor-not-allowed"
+                title="Google sign-up temporarily disabled"
               >
                 <Chrome className="mr-2 h-4 w-4" />
                 Google
               </Button>
               <Button
                 variant="outline"
-                onClick={() => handleOAuthSignUp('apple')}
-                disabled={loading}
-                className="w-full"
+                disabled={true}
+                className="w-full opacity-50 cursor-not-allowed"
+                title="Apple sign-up temporarily disabled"
               >
                 <Apple className="mr-2 h-4 w-4" />
                 Apple
               </Button>
             </div>
+
+            <p className="text-xs text-muted-foreground text-center">
+              Social sign-up options temporarily disabled
+            </p>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">

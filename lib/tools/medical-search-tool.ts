@@ -69,8 +69,6 @@ export class MedicalSearchTool {
       const searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?` +
         `db=pubmed&term=${encodeURIComponent(enhancedQuery)}&retmax=${maxResults}&retmode=json&sort=relevance&field=tiab`
       
-      console.log(`🔍 Searching PubMed for: "${enhancedQuery}"`)
-      
       const searchResponse = await fetch(searchUrl, {
         headers: {
           'User-Agent': 'OpenMed-AI/1.0 (medical-research-tool)',

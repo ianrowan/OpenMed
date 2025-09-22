@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerComponentClient } from '@/lib/supabase'
 import { z } from 'zod'
+import { logger } from '@/lib/logger'
 
 const GeneticUploadRequestSchema = z.object({
   data: z.object({
@@ -42,7 +43,12 @@ export async function POST(request: NextRequest) {
       const batchNumber = Math.floor(i / BATCH_SIZE) + 1
       const totalBatches = Math.ceil(variants.length / BATCH_SIZE)
 
-      console.log(`Processing batch ${batchNumber}/${totalBatches} (${batch.length} variants) for user ${user.id}`)
+      logger.info('Processing genetic data batch', { 
+        batchNumber, 
+        totalBatches, 
+        variantCount: batch.length, 
+        userId: user.id 
+      })
 
       // For first batch, delete existing data. For subsequent batches, just insert
       const shouldDeleteExisting = i === 0
@@ -56,10 +62,17 @@ export async function POST(request: NextRequest) {
         } as any)
 
       if (batchError) {
-        console.error(`Database insert error on batch ${batchNumber}:`, batchError)
+        logger.error('Database insert error on batch', { 
+          batchNumber, 
+          error: batchError.message, 
+          userId: user.id 
+        })
         // If we've already inserted some batches, we should clean up
         if (totalInserted > 0) {
-          console.log(`Cleaning up ${totalInserted} already inserted variants due to batch failure`)
+          logger.info('Cleaning up previously inserted variants due to batch failure', { 
+            totalInserted, 
+            userId: user.id 
+          })
           await supabase.from('genetics_variants').delete().eq('user_id', user.id)
         }
         return NextResponse.json(
@@ -74,7 +87,11 @@ export async function POST(request: NextRequest) {
     // Use totalInserted instead of single operation result
 
     // Log the upload
-    console.log(`Genetic data uploaded for user ${user.id}: ${totalInserted} variants from ${uploadData.metadata.dataSource}`)
+    logger.info('Genetic data uploaded successfully', { 
+      variantsInserted: totalInserted, 
+      dataSource: uploadData.metadata.dataSource,
+      userId: user.id 
+    })
 
     return NextResponse.json({
       success: true,
@@ -86,7 +103,9 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Genetic data upload error:', error)
+    logger.error('Genetic data upload error', { 
+      error: error instanceof Error ? error.message : String(error) 
+    })
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

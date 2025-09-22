@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   try {
@@ -86,7 +87,9 @@ export async function GET() {
 
     return Response.json({ conversations })
   } catch (error) {
-    console.error('Error fetching conversations:', error)
+    logger.error('Error fetching conversations', { 
+      error: error instanceof Error ? error.message : String(error) 
+    })
     return Response.json(
       { error: 'Failed to fetch conversations' },
       { status: 500 }
@@ -131,7 +134,9 @@ export async function POST(request: NextRequest) {
     
     return Response.json({ conversation })
   } catch (error) {
-    console.error('Error creating conversation:', error)
+    logger.error('Error creating conversation', { 
+      error: error instanceof Error ? error.message : String(error) 
+    })
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Upload, FileText, CheckCircle, AlertCircle, XCircle, Activity, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { parseBloodworkCSV, validateBloodworkFile, type ParsedBloodwork, type ProcessedBiomarker } from '@/lib/parsers/bloodwork-parser'
+import { Analytics } from '@/lib/analytics'
 
 interface BloodworkUploaderProps {
   onUploadComplete?: (data: ParsedBloodwork) => void
@@ -62,6 +63,10 @@ export default function BloodworkUploader({ onUploadComplete }: BloodworkUploade
 
       setUploadProgress(100)
       setSuccess(true)
+      
+      // Track successful bloodwork upload
+      Analytics.dataUpload('bloodwork')
+      
       onUploadComplete?.(parsedBloodwork)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')

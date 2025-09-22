@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Trash2, Key, Shield, Clock, Calendar } from 'lucide-react'
 import { useUserApiKey } from '@/hooks/use-user-api-key'
 import { Badge } from '@/components/ui/badge'
+import { Analytics } from '@/lib/analytics'
 
 export function ApiKeyManagement() {
   const { hasKey, keyInfo, loading, error, saveKey, deleteKey } = useUserApiKey()
@@ -30,6 +31,9 @@ export function ApiKeyManagement() {
       setSubmitError(null)
       
       await saveKey(newApiKey.trim(), keyName.trim() || undefined)
+      
+      // Track successful API key addition
+      Analytics.customApiKeyAdded()
       
       // Reset form
       setNewApiKey('')

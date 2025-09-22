@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
+import { logger } from '@/lib/logger'
 
 export async function GET(
   req: NextRequest,
@@ -62,7 +63,7 @@ export async function GET(
 
     return Response.json({ conversation })
   } catch (error) {
-    console.error('Error fetching conversation:', error)
+    logger.error('Error fetching conversation', { error: error instanceof Error ? error.message : String(error) })
     return Response.json(
       { error: 'Failed to fetch conversation' },
       { status: 500 }
@@ -111,7 +112,7 @@ export async function DELETE(
 
     return Response.json({ success: true })
   } catch (error) {
-    console.error('Error deleting conversation:', error)
+    logger.error('Error deleting conversation', { error: error instanceof Error ? error.message : String(error) })
     return Response.json(
       { error: 'Failed to delete conversation' },
       { status: 500 }

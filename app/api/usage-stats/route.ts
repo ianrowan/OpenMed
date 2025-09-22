@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { getUserUsageStats } from '@/lib/usage-limits'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   try {
@@ -30,7 +31,7 @@ export async function GET() {
 
     return Response.json(stats)
   } catch (error) {
-    console.error('Error fetching usage stats:', error)
+    logger.error('Error fetching usage stats', { error: error instanceof Error ? error.message : String(error) })
     return Response.json(
       { error: 'Failed to fetch usage statistics' },
       { status: 500 }

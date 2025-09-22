@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useChat } from 'ai/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +23,7 @@ export default function ChatInterface() {
     type?: string
     details?: any
   } | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/chat',
@@ -65,6 +66,13 @@ export default function ChatInterface() {
       })
     },
   })
+
+  // Auto-scroll to bottom when messages change or when loading
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages, isLoading])
 
   const hasMessages = messages.length > 0
 
@@ -237,6 +245,9 @@ export default function ChatInterface() {
             <AIProcessingStages />
           </div>
         )}
+        
+        {/* Auto-scroll target */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Fixed chat input area at bottom */}
