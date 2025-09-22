@@ -37,29 +37,38 @@ export default function GeneticUploader({ onUploadComplete }: GeneticUploaderPro
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const startTimeRef = useRef<number>(0)
 
-  // Gradual progress animation over 15 seconds to 99%
+  // Gradual progress animation over 20 seconds to 99%
   useEffect(() => {
+    let progressInterval: NodeJS.Timeout
+
     if (uploading && !isProcessingComplete) {
-      startTimeRef.current = Date.now()
-      progressIntervalRef.current = setInterval(() => {
-        const elapsed = Date.now() - startTimeRef.current
-        const duration = 15000 // 15 seconds
+      const startTime = Date.now()
+      const duration = 120000 // 20 seconds
+      
+      // Start the animation immediately
+      progressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime
         
         if (elapsed < duration) {
-          // Gradual progress from 0 to 99% over 15 seconds using easeOut curve
-          const progress = Math.min(99, (elapsed / duration) * 99)
-          const easedProgress = 99 * (1 - Math.pow(1 - progress / 99, 3)) // Cubic ease-out
-          setUploadProgress(Math.floor(easedProgress))
+          // Gradual progress from 1% to 99% over 20 seconds using easeOut curve
+          const linearProgress = elapsed / duration // 0 to 1
+          const easedProgress = 1 - Math.pow(1 - linearProgress, 3) // Cubic ease-out
+          const finalProgress = Math.floor(1 + easedProgress * 98) // 1% to 99%
+          
+          setUploadProgress(finalProgress)
         } else {
           // Stay at 99% until processing is complete
           setUploadProgress(99)
         }
       }, 100) // Update every 100ms for smooth animation
       
-      return () => {
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current)
-        }
+      // Store the interval ref for cleanup
+      progressIntervalRef.current = progressInterval
+    }
+
+    return () => {
+      if (progressInterval) {
+        clearInterval(progressInterval)
       }
     }
   }, [uploading, isProcessingComplete])
@@ -73,15 +82,107 @@ export default function GeneticUploader({ onUploadComplete }: GeneticUploaderPro
     }
   }, [])
 
+  // Upload genetic data in chunks to handle large files
+  const uploadGeneticDataInChunks = async (rawGenetic: any) => {
+    const CHUNK_SIZE = 78000 // Reduce to 50k RSIDs per batch to prevent timeouts
+    const variants = rawGenetic.variants || []
+    const totalVariants = variants.length
+    
+    if (totalVariants === 0) {
+      throw new Error('No genetic variants found in the uploaded data')
+    }
+    
+    // Split variants into chunks
+    const chunks = []
+    for (let i = 0; i < totalVariants; i += CHUNK_SIZE) {
+      chunks.push(variants.slice(i, i + CHUNK_SIZE))
+    }
+    
+    console.log(`Uploading ${totalVariants} variants in ${chunks.length} chunks of max ${CHUNK_SIZE} each`)
+    
+    // Upload each chunk and accumulate results
+    let accumulatedResult = {
+      success: true,
+      totalVariants: 0,
+      variantsSaved: 0,
+      clinicalVariantsFound: 0,
+      reportGenerated: false
+    }
+    
+    for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+      const chunk = chunks[chunkIndex]
+      const chunkData = {
+        variants: chunk,
+        metadata: {
+          ...rawGenetic.metadata,
+          totalVariants: chunk.length,
+          chunkIndex: chunkIndex + 1,
+          totalChunks: chunks.length,
+          isLastChunk: chunkIndex === chunks.length - 1
+        }
+      }
+      
+      console.log(`Uploading chunk ${chunkIndex + 1}/${chunks.length} with ${chunk.length} variants`)
+      
+      try {
+        const response = await fetch('/api/upload/genetic', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            data: chunkData
+          })
+        })
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(`Chunk ${chunkIndex + 1} upload failed: ${errorData.error || 'Upload failed'}`)
+        }
+        
+        const chunkResult = await response.json()
+        
+        // Accumulate results from each chunk
+        accumulatedResult.totalVariants += chunkResult.totalVariants || 0
+        accumulatedResult.variantsSaved += chunkResult.variantsSaved || 0
+        accumulatedResult.clinicalVariantsFound += chunkResult.clinicalVariantsFound || 0
+        
+        // Mark report as generated if any chunk generated it
+        if (chunkResult.reportGenerated) {
+          accumulatedResult.reportGenerated = true
+        }
+        
+        console.log(`Chunk ${chunkIndex + 1} complete:`, chunkResult)
+        
+      } catch (error) {
+        console.error(`Error uploading chunk ${chunkIndex + 1}:`, error)
+        
+        // If this is not the first chunk, we should clean up any previously uploaded chunks
+        if (chunkIndex > 0) {
+          console.warn('Partial upload detected. Some chunks may have been uploaded successfully.')
+          console.warn('You may need to re-upload the entire file to ensure data consistency.')
+        }
+        
+        throw error
+      }
+    }
+
+    console.log('All chunks uploaded successfully:', accumulatedResult)
+    return accumulatedResult
+  }
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
     if (!file) return
 
     setError(null)
     setSuccess(false)
-    setUploading(true)
-    setUploadProgress(0)
     setIsProcessingComplete(false)
+    setUploading(true)
+    setUploadProgress(1) // Start at 1% so progress bar appears immediately
+
+    // Small delay to ensure React processes state updates and triggers useEffect
+    await new Promise(resolve => setTimeout(resolve, 50))
 
     try {
       // Validate file (let progress animation run in background)
@@ -98,21 +199,8 @@ export default function GeneticUploader({ onUploadComplete }: GeneticUploaderPro
       const assessment = getClinicalRiskAssessment(parsedGenetic.variants)
       setRiskAssessment(assessment)
 
-      // Upload to server - send only raw data for storage
-      const response = await fetch('/api/upload/genetic', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          data: rawGenetic, // Only raw data for storage
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Upload failed')
-      }
+      // Upload to server with pagination - send data in chunks
+      await uploadGeneticDataInChunks(rawGenetic)
 
       // Mark processing as complete and immediately set to 100%
       setIsProcessingComplete(true)

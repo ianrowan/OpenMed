@@ -101,4 +101,28 @@ export const supabaseAdmin = supabaseUrl && supabaseServiceRoleKey
   ? createSupabaseClient<Database>(supabaseUrl, supabaseServiceRoleKey)
   : null
 
+// Specialized client for genetic data uploads with extended timeouts
+export const createGeneticUploadClient = () => {
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error('Missing Supabase environment variables for genetic upload client')
+  }
+  
+  return createSupabaseClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
+    db: {
+      schema: 'public'
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'genetic-upload-client',
+        // Add custom timeout headers if supported
+        'X-Request-Timeout': process.env.GENETIC_UPLOAD_TIMEOUT || '300000' // 5 minutes default
+      }
+    },
+    // Configure longer timeouts for large data operations
+    auth: {
+      persistSession: false
+    }
+  })
+}
+
 export type SupabaseClient = ReturnType<typeof createClient>
