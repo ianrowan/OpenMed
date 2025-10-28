@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth/AuthContext'
+import { ConsentDialog, useConsent } from '@/components/ConsentDialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -18,6 +19,7 @@ import type { ParsedGeneticData } from '@/lib/parsers/genetic-parser'
 
 export default function UploadPage() {
   const { user, loading } = useAuth()
+  const { hasConsented, giveConsent } = useConsent('upload-consent')
   const router = useRouter()
   const [uploadCount, setUploadCount] = useState(0)
 
@@ -50,6 +52,37 @@ export default function UploadPage() {
             </AlertDescription>
           </Alert>
         </div>
+      </div>
+    )
+  }
+
+  // Show consent dialog if user hasn't consented
+  if (hasConsented === false) {
+    return (
+      <>
+        <ConsentDialog
+          open={true}
+          onAccept={giveConsent}
+          storageKey="upload-consent"
+          title="Data Upload - Terms & Privacy"
+          description="Before uploading your health data, please review and accept our terms"
+        />
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+          <div className="text-center">
+            <Upload className="h-16 w-16 mx-auto mb-4 text-primary" />
+            <h1 className="text-2xl font-bold mb-2">Upload Medical Data</h1>
+            <p className="text-muted-foreground">Please accept the terms to continue</p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // Loading consent state
+  if (hasConsented === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Loading...</div>
       </div>
     )
   }

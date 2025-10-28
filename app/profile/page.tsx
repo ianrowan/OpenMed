@@ -238,6 +238,57 @@ export default function ProfilePage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Legal & Consent Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Legal & Privacy</CardTitle>
+            <CardDescription>
+              Review our legal documents and manage your consent preferences
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Legal Documents</h3>
+              <div className="flex flex-col gap-2">
+                <Link
+                  href="/legal/terms-of-service"
+                  target="_blank"
+                  className="text-sm text-primary hover:underline"
+                >
+                  📄 Terms of Service
+                </Link>
+                <Link
+                  href="/legal/privacy-policy"
+                  target="_blank"
+                  className="text-sm text-primary hover:underline"
+                >
+                  🔒 Privacy Policy
+                </Link>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <h3 className="text-sm font-medium mb-2">Consent Management</h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                Clear your consent to review and re-accept our terms
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  localStorage.removeItem('chat-consent')
+                  localStorage.removeItem('chat-consent_timestamp')
+                  localStorage.removeItem('upload-consent')
+                  localStorage.removeItem('upload-consent_timestamp')
+                  alert('Consent cleared. You will be asked to accept terms again when using chat or upload features.')
+                }}
+              >
+                Clear All Consent
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

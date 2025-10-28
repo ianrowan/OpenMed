@@ -17,7 +17,7 @@ export const BloodworkRowSchema = z.object({
     const num = parseFloat(val)
     return isNaN(num) ? null : num
   }),
-  Status: z.enum(['high', 'low', 'normal', 'critical']).optional(),
+  Status: z.enum(['high', 'low', 'normal']).optional(),
   Date: z.string().min(1, 'Date is required'),
   Lab: z.string().min(1, 'Lab name is required'),
 })
@@ -41,7 +41,7 @@ export interface ProcessedBiomarker {
   unit: string
   referenceMin: number | null
   referenceMax: number | null
-  status: 'high' | 'low' | 'normal' | 'critical'
+  status: 'high' | 'low' | 'normal'
   percentileFromNormal?: number
   interpretation?: string
 }
@@ -52,21 +52,10 @@ export function calculateBiomarkerStatus(
   referenceMin: number | null,
   referenceMax: number | null,
   biomarkerName: string
-): { status: 'high' | 'low' | 'normal' | 'critical', interpretation?: string } {
+): { status: 'high' | 'low' | 'normal', interpretation?: string } {
   // If no reference range, assume normal
   if (referenceMin === null && referenceMax === null) {
     return { status: 'normal' }
-  }
-
-  // Check for critical values (these need medical attention)
-  const criticalRanges = getCriticalRanges(biomarkerName)
-  if (criticalRanges) {
-    if (value <= criticalRanges.criticalLow || value >= criticalRanges.criticalHigh) {
-      return { 
-        status: 'critical',
-        interpretation: `Critical ${biomarkerName} level requires immediate medical attention`
-      }
-    }
   }
 
   // Standard range checking
@@ -89,22 +78,6 @@ export function calculateBiomarkerStatus(
   return { status: 'normal' }
 }
 
-// Critical ranges for common biomarkers
-function getCriticalRanges(biomarkerName: string): { criticalLow: number, criticalHigh: number } | null {
-  const criticalRanges: Record<string, { criticalLow: number, criticalHigh: number }> = {
-    'Glucose': { criticalLow: 40, criticalHigh: 400 },
-    'Potassium': { criticalLow: 2.5, criticalHigh: 6.0 },
-    'Sodium': { criticalLow: 120, criticalHigh: 160 },
-    'Creatinine': { criticalLow: 0.2, criticalHigh: 10.0 },
-    'Total Cholesterol': { criticalLow: 0, criticalHigh: 500 },
-    'Hemoglobin': { criticalLow: 6.0, criticalHigh: 20.0 },
-    'White Blood Cells': { criticalLow: 1.0, criticalHigh: 50.0 },
-    'Platelets': { criticalLow: 20, criticalHigh: 1000 },
-  }
-
-  return criticalRanges[biomarkerName] || null
-}
-
 // Parse CSV content into bloodwork data
 export function parseBloodworkCSV(csvContent: string): ParsedBloodwork {
   const lines = csvContent.trim().split('\n')
@@ -119,7 +92,6 @@ export function parseBloodworkCSV(csvContent: string): ParsedBloodwork {
 
   const biomarkers: ProcessedBiomarker[] = []
   let abnormalCount = 0
-  let criticalCount = 0
   let testDate = ''
   let labName = ''
 
@@ -158,7 +130,6 @@ export function parseBloodworkCSV(csvContent: string): ParsedBloodwork {
       biomarkers.push(processedBiomarker)
 
       if (statusResult.status !== 'normal') abnormalCount++
-      if (statusResult.status === 'critical') criticalCount++
 
       // Store metadata from first row
       if (i === 1) {
@@ -175,7 +146,7 @@ export function parseBloodworkCSV(csvContent: string): ParsedBloodwork {
     metadata: {
       totalCount: biomarkers.length,
       abnormalCount,
-      criticalCount,
+      criticalCount: 0, // No longer tracking critical values
       testDate,
       labName,
     }

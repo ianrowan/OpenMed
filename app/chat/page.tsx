@@ -3,12 +3,14 @@
 import { useAuth } from '@/lib/auth/AuthContext'
 import { ChatInterfaceWithHistory } from '@/components/chat/chat-interface-with-history'
 import { ChatProvider } from '@/components/chat/chat-context'
+import { ConsentDialog, useConsent } from '@/components/ConsentDialog'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ChatPage() {
   const { user, loading } = useAuth()
+  const { hasConsented, giveConsent } = useConsent('chat-consent')
 
   if (loading) {
     return (
@@ -28,6 +30,36 @@ export default function ChatPage() {
             <Button>Sign In</Button>
           </Link>
         </div>
+      </div>
+    )
+  }
+
+  // Show consent dialog if user hasn't consented
+  if (hasConsented === false) {
+    return (
+      <>
+        <ConsentDialog
+          open={true}
+          onAccept={giveConsent}
+          storageKey="chat-consent"
+          title="Medical AI Chat - Terms & Privacy"
+          description="Before using our AI chat feature, please review and accept our terms"
+        />
+        <div className="min-h-screen flex items-center justify-center bg-muted/20">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-2">Welcome to OpenMed Chat</h1>
+            <p className="text-muted-foreground">Please accept the terms to continue</p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // Loading consent state
+  if (hasConsented === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Loading...</div>
       </div>
     )
   }
