@@ -201,28 +201,23 @@ export function ChatInterfaceWithHistory() {
         {!hasMessages ? (
           <div className="flex h-full flex-col">
             {/* Fixed header area with model selector and sidebar toggle */}
-            <div className="border-b p-4 bg-background flex-shrink-0">
+            <div className="border-b border-slate-200 p-4 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="hover:bg-blue-50"
                   >
                     {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
                   </Button>
-                  <h1 className="text-lg font-semibold">OpenMed AI Chat</h1>
+                  <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">OpenMed AI Chat</h1>
                 </div>
                 <div className="flex items-center gap-4">
-                  <Link href="/dashboard">
-                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                      <LayoutDashboard className="w-4 h-4" />
-                      <span className="hidden sm:inline">Dashboard</span>
-                    </Button>
-                  </Link>
-                  <div className="flex items-center gap-2">
-                    <TestTube className="w-4 h-4 text-muted-foreground" />
-                    <Label htmlFor="demo-mode" className="text-sm">Demo Mode</Label>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 rounded-lg border border-orange-200">
+                    <TestTube className="w-4 h-4 text-orange-600" />
+                    <Label htmlFor="demo-mode" className="text-sm font-medium text-slate-700">Demo</Label>
                     <Switch 
                       id="demo-mode"
                       checked={demoMode} 
@@ -243,16 +238,16 @@ export function ChatInterfaceWithHistory() {
             <CustomKeyBanner />
 
             {/* Welcome content area */}
-            <div className="flex-1 flex flex-col items-center justify-center space-y-6 p-4 min-h-0">
-              <div className="text-center space-y-4">
-                <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Activity className="w-8 h-8 text-primary" />
+            <div className="flex-1 flex flex-col items-center justify-center space-y-8 p-8 min-h-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+              <div className="text-center space-y-4 max-w-2xl">
+                <div className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
+                  <Activity className="w-10 h-10 text-white" />
                 </div>
-                <h2 className="text-2xl font-semibold">Welcome to OpenMed AI</h2>
-                <p className="text-muted-foreground max-w-md">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Welcome to OpenMed AI</h2>
+                <p className="text-slate-600 max-w-md mx-auto font-medium">
                   {demoMode ? (
                     <>
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded-md text-sm font-medium mb-2">
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 rounded-lg text-sm font-semibold mb-3 shadow-sm border border-orange-200">
                         <TestTube className="w-4 h-4" />
                         Demo Mode Active
                       </span>
@@ -269,37 +264,37 @@ export function ChatInterfaceWithHistory() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2 max-w-2xl w-full">
-                <Link href="/upload">
-                  <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
+                <Link href="/upload" className="group">
+                  <Card className="cursor-pointer border-2 hover:border-blue-300 transition-all hover:shadow-xl bg-white/80 backdrop-blur-sm h-full hover:scale-105 transform duration-200">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Upload className="w-5 h-5" />
+                      <CardTitle className="text-lg flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700">
+                        <Upload className="w-5 h-5 text-blue-600 group-hover:text-blue-700" />
                         Upload Data
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="text-slate-600 font-medium">
                         Upload blood work, genetic test results, or other medical data
                       </CardDescription>
                     </CardHeader>
                   </Card>
                 </Link>
 
-                <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
+                <Card className="cursor-pointer border-2 hover:border-purple-300 transition-all hover:shadow-xl bg-white/80 backdrop-blur-sm h-full hover:scale-105 transform duration-200">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Example Questions</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-lg bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Example Questions</CardTitle>
+                    <CardDescription className="text-slate-600 font-medium">
                       Try asking about biomarker trends, genetic variants, or health correlations
                     </CardDescription>
                   </CardHeader>
                 </Card>
               </div>
 
-              <div className="mt-6">
-                <BloodworkDialog triggerText="Need Bloodwork? Get comprehensive testing" triggerSize="default" className="w-full sm:w-auto" />
+              <div className="mt-4">
+                <BloodworkDialog triggerText="Need Bloodwork? Get comprehensive testing" triggerSize="default" className="w-full sm:w-auto shadow-lg hover:shadow-xl transition-shadow" />
               </div>
             </div>
 
             {/* Fixed chat input area at bottom */}
-            <div className="border-t p-4 bg-background flex-shrink-0 space-y-4">
+            <div className="border-t border-slate-200 p-6 bg-white/80 backdrop-blur-md flex-shrink-0 space-y-4 shadow-sm">
               {/* Error display */}
               {chatError && (
                 <div className="space-y-2">
@@ -307,16 +302,16 @@ export function ChatInterfaceWithHistory() {
                     <UsageLimitError
                       modelTier={chatError.details.modelTier}
                       resetTime={chatError.details.resetTime}
-                      className="max-w-2xl mx-auto"
+                      className="max-w-3xl mx-auto"
                     />
                   ) : (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 max-w-2xl mx-auto">
+                    <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 rounded-lg p-4 max-w-3xl mx-auto shadow-md">
                       <div className="flex">
                         <div className="ml-3">
-                          <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                          <h3 className="text-sm font-semibold text-red-800">
                             Error
                           </h3>
-                          <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                          <div className="mt-2 text-sm text-red-700 font-medium">
                             {chatError.message}
                           </div>
                         </div>
@@ -328,7 +323,7 @@ export function ChatInterfaceWithHistory() {
                       variant="ghost" 
                       size="sm" 
                       onClick={() => setChatError(null)}
-                      className="text-xs"
+                      className="text-xs hover:bg-red-50"
                     >
                       Dismiss
                     </Button>
@@ -336,12 +331,12 @@ export function ChatInterfaceWithHistory() {
                 </div>
               )}
               
-              <form onSubmit={handleChatSubmit} className="flex gap-2 max-w-2xl mx-auto">
+              <form onSubmit={handleChatSubmit} className="flex gap-3 max-w-3xl mx-auto">
                 <Textarea
                   value={input}
                   onChange={handleInputChange}
                   placeholder="Ask about your health data... (e.g., 'What are my out of range biomarkers?')"
-                  className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+                  className="flex-1 min-h-[40px] max-h-[120px] resize-none border-2 focus:border-blue-300 shadow-sm"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()
@@ -349,7 +344,7 @@ export function ChatInterfaceWithHistory() {
                     }
                   }}
                 />
-                <Button type="submit" disabled={!input.trim() || isLoading} className="self-end">
+                <Button type="submit" disabled={!input.trim() || isLoading} className="self-end bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all">
                   <Send className="w-4 h-4" />
                 </Button>
               </form>
@@ -358,27 +353,38 @@ export function ChatInterfaceWithHistory() {
         ) : (
           <div className="flex h-full flex-col">
             {/* Fixed header area with model selector and sidebar toggle */}
-            <div className="border-b p-4 bg-background flex-shrink-0">
+            <div className="border-b border-slate-200 p-4 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="hover:bg-blue-50"
                   >
                     {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
                   </Button>
-                  <h1 className="text-lg font-semibold">
+                  <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent truncate max-w-xs md:max-w-md">
                     {currentConversation?.title || 'OpenMed AI Chat'}
                   </h1>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Link href="/dashboard">
-                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 transition-all">
                       <LayoutDashboard className="w-4 h-4" />
-                      <span className="hidden sm:inline">Dashboard</span>
+                      <span className="hidden sm:inline font-medium">Dashboard</span>
                     </Button>
                   </Link>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 rounded-lg border border-orange-200">
+                    <TestTube className="w-4 h-4 text-orange-600" />
+                    <Label htmlFor="demo-mode-messages" className="text-sm font-medium text-slate-700">Demo</Label>
+                    <Switch 
+                      id="demo-mode-messages"
+                      checked={demoMode} 
+                      onCheckedChange={setDemoMode}
+                      className="data-[state=checked]:bg-orange-500"
+                    />
+                  </div>
                   <ModelSelector
                     selectedModel={selectedModel}
                     onModelChange={handleModelChange}
@@ -392,9 +398,9 @@ export function ChatInterfaceWithHistory() {
             <CustomKeyBanner />
 
             {/* Scrollable messages area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
               {messages.map((message, index) => (
-                <div key={message.id} className="space-y-4">
+                <div key={message.id} className="space-y-4 max-w-4xl mx-auto">
                   {/* Show loading animation above tool cards for the last assistant message being processed */}
                   {message.role === 'assistant' && isLoading && index === messages.length - 1 && (
                     <AIProcessingStages />
@@ -424,7 +430,7 @@ export function ChatInterfaceWithHistory() {
             </div>
 
             {/* Fixed chat input area at bottom */}
-            <div className="border-t p-4 bg-background flex-shrink-0 space-y-4">
+            <div className="border-t border-slate-200 p-6 bg-white/80 backdrop-blur-md flex-shrink-0 space-y-4 shadow-sm">
               {/* Error display */}
               {chatError && (
                 <div className="space-y-2">
@@ -432,16 +438,16 @@ export function ChatInterfaceWithHistory() {
                     <UsageLimitError
                       modelTier={chatError.details.modelTier}
                       resetTime={chatError.details.resetTime}
-                      className="max-w-2xl mx-auto"
+                      className="max-w-3xl mx-auto"
                     />
                   ) : (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 max-w-2xl mx-auto">
+                    <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 rounded-lg p-4 max-w-3xl mx-auto shadow-md">
                       <div className="flex">
                         <div className="ml-3">
-                          <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                          <h3 className="text-sm font-semibold text-red-800">
                             Error
                           </h3>
-                          <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                          <div className="mt-2 text-sm text-red-700 font-medium">
                             {chatError.message}
                           </div>
                         </div>
@@ -453,7 +459,7 @@ export function ChatInterfaceWithHistory() {
                       variant="ghost" 
                       size="sm" 
                       onClick={() => setChatError(null)}
-                      className="text-xs"
+                      className="text-xs hover:bg-red-50"
                     >
                       Dismiss
                     </Button>
@@ -461,12 +467,12 @@ export function ChatInterfaceWithHistory() {
                 </div>
               )}
               
-              <form onSubmit={handleChatSubmit} className="flex gap-2 max-w-2xl mx-auto">
+              <form onSubmit={handleChatSubmit} className="flex gap-3 max-w-4xl mx-auto">
                 <Textarea
                   value={input}
                   onChange={handleInputChange}
                   placeholder="Ask about your health data..."
-                  className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+                  className="flex-1 min-h-[40px] max-h-[120px] resize-none border-2 focus:border-blue-300 shadow-sm"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()
@@ -474,7 +480,7 @@ export function ChatInterfaceWithHistory() {
                     }
                   }}
                 />
-                <Button type="submit" disabled={!input.trim() || isLoading} className="self-end">
+                <Button type="submit" disabled={!input.trim() || isLoading} className="self-end bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all">
                   <Send className="w-4 h-4" />
                 </Button>
               </form>

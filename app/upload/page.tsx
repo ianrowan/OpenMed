@@ -43,11 +43,11 @@ export default function UploadPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4">
         <div className="max-w-4xl mx-auto pt-8">
-          <Alert>
-            <Shield className="h-4 w-4" />
-            <AlertDescription>
+          <Alert className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-md">
+            <Shield className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-slate-700 font-medium">
               Please sign in to upload your medical data.
             </AlertDescription>
           </Alert>
@@ -67,11 +67,11 @@ export default function UploadPage() {
           title="Data Upload - Terms & Privacy"
           description="Before uploading your health data, please review and accept our terms"
         />
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-          <div className="text-center">
-            <Upload className="h-16 w-16 mx-auto mb-4 text-primary" />
-            <h1 className="text-2xl font-bold mb-2">Upload Medical Data</h1>
-            <p className="text-muted-foreground">Please accept the terms to continue</p>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+          <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200 max-w-md">
+            <Upload className="h-16 w-16 mx-auto mb-4 text-blue-600" />
+            <h1 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Upload Medical Data</h1>
+            <p className="text-slate-600">Please accept the terms to continue</p>
           </div>
         </div>
       </>
@@ -88,17 +88,17 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4">
       <div className="max-w-4xl mx-auto pt-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Upload Medical Data</h1>
-            <p className="mt-2 text-gray-600">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Upload Medical Data</h1>
+            <p className="mt-2 text-slate-600 font-medium">
               Upload your bloodwork results and genetic data for personalized analysis
             </p>
           </div>
-          <Button variant="outline" asChild>
+          <Button variant="outline" asChild className="hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all">
             <Link href="/chat" className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back to Chat
@@ -110,7 +110,7 @@ export default function UploadPage() {
         <div className="mb-8 flex gap-3">
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="flex items-center gap-2 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600 transition-all">
                 <Info className="h-4 w-4" />
                 Privacy Concerned?
               </Button>
@@ -152,9 +152,9 @@ export default function UploadPage() {
 
         {/* Success message */}
         {uploadCount > 0 && (
-          <Alert className="mb-6 border-green-500 text-green-700">
-            <Upload className="h-4 w-4" />
-            <AlertDescription>
+          <Alert className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-500 shadow-md">
+            <Upload className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-700 font-semibold">
               {uploadCount} file(s) uploaded successfully! Your data is now available for analysis.
             </AlertDescription>
           </Alert>
@@ -162,30 +162,30 @@ export default function UploadPage() {
 
         {/* Upload tabs */}
         <Tabs defaultValue="bloodwork" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="bloodwork" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm border border-slate-200 shadow-lg p-1">
+            <TabsTrigger value="bloodwork" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white">
               <Activity className="h-4 w-4" />
               Bloodwork Results
             </TabsTrigger>
-            <TabsTrigger value="genetic" className="flex items-center gap-2">
+            <TabsTrigger value="genetic" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white">
               <Dna className="h-4 w-4" />
               Genetic Data
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="bloodwork" className="space-y-6">
-            <Card>
+            <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Bloodwork & Lab Results</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Bloodwork & Lab Results</CardTitle>
+                <CardDescription className="text-slate-600 font-medium">
                   Upload your laboratory test results in CSV format. We support standard lab report formats 
                   and will automatically analyze your biomarkers for trends and abnormalities.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-blue-900 mb-2">Supported Format:</h4>
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200 shadow-sm">
+                    <h4 className="font-semibold text-blue-900 mb-2">Supported Format:</h4>
                     <ul className="text-sm text-blue-800 space-y-1">
                       <li>• CSV files with headers: Biomarker, Value, Unit, Reference_Min, Reference_Max, Date, Lab</li>
                       <li>• Common lab formats from Quest, LabCorp, and other major laboratories</li>
@@ -200,18 +200,18 @@ export default function UploadPage() {
           </TabsContent>
 
           <TabsContent value="genetic" className="space-y-6">
-            <Card>
+            <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Genetic Data</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Genetic Data</CardTitle>
+                <CardDescription className="text-slate-600 font-medium">
                   Upload your raw genetic data from 23andMe, AncestryDNA, or other genetic testing services. 
                   We'll analyze your variants for health insights and drug responses.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-purple-900 mb-2">Supported Sources:</h4>
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200 shadow-sm">
+                    <h4 className="font-semibold text-purple-900 mb-2">Supported Sources:</h4>
                     <ul className="text-sm text-purple-800 space-y-1">
                       <li>• 23andMe raw data files (.txt)</li>
                       <li>• AncestryDNA raw data files (.txt)</li>
@@ -221,9 +221,9 @@ export default function UploadPage() {
                     </ul>
                   </div>
                   
-                  <Alert className="border-amber-200 bg-amber-50">
+                  <Alert className="border-2 border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 shadow-sm">
                     <Shield className="h-4 w-4 text-amber-600" />
-                    <AlertDescription className="text-amber-800">
+                    <AlertDescription className="text-amber-800 font-medium">
                       <strong>Privacy Notice:</strong> Your genetic data is encrypted and stored securely. 
                       We never share your genetic information with third parties. You can delete your data at any time.
                     </AlertDescription>
@@ -238,16 +238,16 @@ export default function UploadPage() {
 
         {/* Next steps */}
         {uploadCount > 0 && (
-          <Card className="mt-8">
+          <Card className="mt-8 border-none shadow-xl bg-white/80 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle>What's Next?</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-xl bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">What's Next?</CardTitle>
+              <CardDescription className="text-slate-600 font-medium">
                 Your data has been uploaded successfully. Here's what you can do now:
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button asChild className="h-auto p-4 flex-col gap-2">
+                <Button asChild className="h-auto p-4 flex-col gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
                   <Link href="/dashboard">
                     <Activity className="h-6 w-6" />
                     <div className="text-center">
@@ -256,7 +256,7 @@ export default function UploadPage() {
                     </div>
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="h-auto p-4 flex-col gap-2">
+                <Button asChild variant="outline" className="h-auto p-4 flex-col gap-2 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all">
                   <Link href="/chat">
                     <Dna className="h-6 w-6" />
                     <div className="text-center">
@@ -265,7 +265,7 @@ export default function UploadPage() {
                     </div>
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="h-auto p-4 flex-col gap-2">
+                <Button asChild variant="outline" className="h-auto p-4 flex-col gap-2 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600 transition-all">
                   <Link href="/profile">
                     <Shield className="h-6 w-6" />
                     <div className="text-center">
