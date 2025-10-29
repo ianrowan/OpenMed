@@ -164,15 +164,23 @@ export async function POST(req: Request) {
       }
     }
 
-    // Save the user message immediately if conversation_id is provided
-    if (conversation_id && messages.length > 0) {
+    // Create conversation if not provided and save the user message
+    let actualConversationId = conversation_id
+    if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1]
       if (lastMessage.role === 'user') {
+        // If no conversation_id, generate a new UUID for the conversation
+        if (!actualConversationId) {
+          actualConversationId = crypto.randomUUID()
+          logger.debug('Created new conversation', { conversationId: actualConversationId, userId: user.id })
+        }
+        
+        // Save the user message
         await (supabase as any)
           .from('chat_messages')
           .insert({
             user_id: user.id,
-            conversation_id,
+            conversation_id: actualConversationId,
             role: lastMessage.role,
             content: lastMessage.content,
             tool_calls: null
@@ -231,12 +239,12 @@ export async function POST(req: Request) {
       },
       onFinish: async (result) => {
         // Save the assistant response immediately when it's complete
-        if (conversation_id && result.text) {
+        if (actualConversationId && result.text) {
           await (supabase as any)
             .from('chat_messages')
             .insert({
               user_id: user.id,
-              conversation_id,
+              conversation_id: actualConversationId,
               role: 'assistant',
               content: result.text,
               tool_calls: result.toolCalls || null
