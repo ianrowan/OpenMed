@@ -5,7 +5,7 @@ import { ChatInterfaceWithHistory } from '@/components/chat/chat-interface-with-
 import { ChatProvider } from '@/components/chat/chat-context'
 import { ConsentDialog, useConsent } from '@/components/ConsentDialog'
 import { Button } from '@/components/ui/button'
-import { LayoutDashboard } from 'lucide-react'
+import { LayoutDashboard, Activity } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ChatPage() {
@@ -70,11 +70,16 @@ export default function ChatPage() {
         <div className="flex h-full flex-col">
           <header className="border-b border-slate-200 px-6 py-4 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">OpenMed Chat</h1>
-                <p className="text-sm text-slate-600 font-medium">
-                  AI-powered medical data analysis with conversation history
-                </p>
+              <div className="flex items-center space-x-3">
+                <Activity className="h-7 w-7 text-blue-600" />
+                <div>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    OpenMed
+                  </h1>
+                  <p className="text-xs text-slate-600 font-medium">
+                    AI-powered medical assistant
+                  </p>
+                </div>
               </div>
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm" className="hover:bg-blue-50 hover:text-blue-600 transition-all">

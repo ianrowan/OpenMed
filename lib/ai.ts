@@ -146,22 +146,10 @@ export const AVAILABLE_MODELS: Array<{
   tier: 'premium' | 'basic'
 }> = [
   {
-    id: 'gpt-5',
-    name: 'GPT-5',
-    description: 'Most advanced model with superior reasoning',
-    tier: 'premium'
-  },
-  {
     id: 'gpt-4.1',
     name: 'GPT-4.1',
     description: 'Enhanced GPT-4 with improved accuracy',
     tier: 'premium'
-  },
-  {
-    id: 'gpt-5-mini',
-    name: 'GPT-5 Mini',
-    description: 'Faster GPT-5 variant, great balance of speed and quality',
-    tier: 'basic'
   },
   {
     id: 'gpt-4.1-mini',
