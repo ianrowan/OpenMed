@@ -42,30 +42,30 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-3">
-              <Activity className="h-7 w-7 text-blue-600" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <div className="flex justify-between items-center py-3 md:py-4">
+            <div className="flex items-center space-x-2 md:space-x-3">
+              <Activity className="h-6 w-6 md:h-7 md:w-7 text-blue-600" />
+              <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 OpenMed
               </h1>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 md:space-x-4">
               {/* Demo Mode Toggle */}
-              <div className="flex items-center space-x-2 bg-slate-100 rounded-full px-3 py-1.5">
-                <TestTube className="h-4 w-4 text-slate-600" />
-                <Label htmlFor="demo-mode" className="text-sm font-medium cursor-pointer">Demo</Label>
+              <div className="flex items-center space-x-1 md:space-x-2 bg-slate-100 rounded-full px-2 md:px-3 py-1 md:py-1.5">
+                <TestTube className="h-3 w-3 md:h-4 md:w-4 text-slate-600" />
+                <Label htmlFor="demo-mode" className="text-xs md:text-sm font-medium cursor-pointer hidden sm:inline">Demo</Label>
                 <Switch
                   id="demo-mode"
                   checked={demoMode}
                   onCheckedChange={setDemoMode}
-                  className="data-[state=checked]:bg-blue-600"
+                  className="data-[state=checked]:bg-blue-600 scale-75 md:scale-100"
                 />
               </div>
               
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-lg">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs md:text-sm font-semibold shadow-lg">
                 {user?.email ? getInitials(user.email) : 'U'}
               </div>
-              <div className="hidden sm:block">
+              <div className="hidden lg:block">
                 <p className="text-sm font-semibold text-gray-900">{user?.email}</p>
                 <p className="text-xs text-slate-600 flex items-center gap-1">
                   {profile ? (
@@ -75,7 +75,7 @@ export default function DashboardPage() {
                   )}
                 </p>
               </div>
-              <Button variant="outline" onClick={handleSignOut} className="border-slate-300 hover:bg-slate-100">
+              <Button variant="outline" onClick={handleSignOut} className="border-slate-300 hover:bg-slate-100 text-xs md:text-sm px-2 md:px-4 py-1 md:py-2 hidden sm:flex">
                 Sign Out
               </Button>
             </div>
@@ -83,60 +83,60 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 md:space-y-6">
             {/* Welcome Card */}
             <Card className="border-none shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-2xl">
-                  <User className="h-6 w-6 text-blue-600" />
+              <CardHeader className="p-4 md:p-6">
+                <CardTitle className="flex items-center space-x-2 text-xl md:text-2xl">
+                  <User className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
                   <span>Welcome to OpenMed!</span>
                 </CardTitle>
-                <CardDescription className="text-base">
+                <CardDescription className="text-sm md:text-base">
                   Your AI-powered medical data analysis platform
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                   <Link href="/chat" className="group">
-                    <Card className="border-2 border-blue-100 hover:border-blue-300 hover:shadow-xl transition-all duration-200 cursor-pointer bg-gradient-to-br from-blue-50 to-white group-hover:scale-105">
-                      <CardContent className="flex flex-col items-center justify-center p-6 text-center space-y-3">
-                        <div className="p-3 bg-blue-100 rounded-2xl group-hover:bg-blue-600 transition-colors">
-                          <MessageSquare className="h-8 w-8 text-blue-600 group-hover:text-white transition-colors" />
+                    <Card className="border-2 border-blue-100 hover:border-blue-300 hover:shadow-xl transition-all duration-200 cursor-pointer bg-gradient-to-br from-blue-50 to-white sm:group-hover:scale-105">
+                      <CardContent className="flex flex-col items-center justify-center p-4 md:p-6 text-center space-y-2 md:space-y-3">
+                        <div className="p-2 md:p-3 bg-blue-100 rounded-xl md:rounded-2xl group-hover:bg-blue-600 transition-colors">
+                          <MessageSquare className="h-6 w-6 md:h-8 md:w-8 text-blue-600 group-hover:text-white transition-colors" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg">AI Chat</h3>
-                          <p className="text-sm text-slate-600">Ask about your health</p>
+                          <h3 className="font-semibold text-base md:text-lg">AI Chat</h3>
+                          <p className="text-xs md:text-sm text-slate-600">Ask about your health</p>
                         </div>
                       </CardContent>
                     </Card>
                   </Link>
 
                   <Link href="/upload" className="group">
-                    <Card className="border-2 border-emerald-100 hover:border-emerald-300 hover:shadow-xl transition-all duration-200 cursor-pointer bg-gradient-to-br from-emerald-50 to-white group-hover:scale-105">
-                      <CardContent className="flex flex-col items-center justify-center p-6 text-center space-y-3">
-                        <div className="p-3 bg-emerald-100 rounded-2xl group-hover:bg-emerald-600 transition-colors">
-                          <Upload className="h-8 w-8 text-emerald-600 group-hover:text-white transition-colors" />
+                    <Card className="border-2 border-emerald-100 hover:border-emerald-300 hover:shadow-xl transition-all duration-200 cursor-pointer bg-gradient-to-br from-emerald-50 to-white sm:group-hover:scale-105">
+                      <CardContent className="flex flex-col items-center justify-center p-4 md:p-6 text-center space-y-2 md:space-y-3">
+                        <div className="p-2 md:p-3 bg-emerald-100 rounded-xl md:rounded-2xl group-hover:bg-emerald-600 transition-colors">
+                          <Upload className="h-6 w-6 md:h-8 md:w-8 text-emerald-600 group-hover:text-white transition-colors" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg">Upload Data</h3>
-                          <p className="text-sm text-slate-600">Add your medical files</p>
+                          <h3 className="font-semibold text-base md:text-lg">Upload Data</h3>
+                          <p className="text-xs md:text-sm text-slate-600">Add your medical files</p>
                         </div>
                       </CardContent>
                     </Card>
                   </Link>
 
                   <Link href="/profile" className="group">
-                    <Card className="border-2 border-purple-100 hover:border-purple-300 hover:shadow-xl transition-all duration-200 cursor-pointer bg-gradient-to-br from-purple-50 to-white group-hover:scale-105">
-                      <CardContent className="flex flex-col items-center justify-center p-6 text-center space-y-3">
-                        <div className="p-3 bg-purple-100 rounded-2xl group-hover:bg-purple-600 transition-colors">
-                          <Settings className="h-8 w-8 text-purple-600 group-hover:text-white transition-colors" />
+                    <Card className="border-2 border-purple-100 hover:border-purple-300 hover:shadow-xl transition-all duration-200 cursor-pointer bg-gradient-to-br from-purple-50 to-white sm:group-hover:scale-105">
+                      <CardContent className="flex flex-col items-center justify-center p-4 md:p-6 text-center space-y-2 md:space-y-3">
+                        <div className="p-2 md:p-3 bg-purple-100 rounded-xl md:rounded-2xl group-hover:bg-purple-600 transition-colors">
+                          <Settings className="h-6 w-6 md:h-8 md:w-8 text-purple-600 group-hover:text-white transition-colors" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg">Profile</h3>
-                          <p className="text-sm text-slate-600">Manage your info</p>
+                          <h3 className="font-semibold text-base md:text-lg">Profile</h3>
+                          <p className="text-xs md:text-sm text-slate-600">Manage your info</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -173,11 +173,11 @@ export default function DashboardPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {/* Profile Summary */}
             <Card className="border-none shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-xl">Profile Summary</CardTitle>
+              <CardHeader className="pb-3 md:pb-4 p-4 md:p-6">
+                <CardTitle className="text-lg md:text-xl">Profile Summary</CardTitle>
               </CardHeader>
               <CardContent>
                 {profile ? (

@@ -68,23 +68,23 @@ export default function ChatPage() {
     <ChatProvider>
       <div className="h-screen max-w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="flex h-full flex-col">
-          <header className="border-b border-slate-200 px-6 py-4 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Activity className="h-7 w-7 text-blue-600" />
-                <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <header className="border-b border-slate-200 px-3 sm:px-4 md:px-6 py-3 md:py-4 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center space-x-2 md:space-x-3 min-w-0">
+                <Activity className="h-6 w-6 md:h-7 md:w-7 text-blue-600 flex-shrink-0" />
+                <div className="min-w-0">
+                  <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     OpenMed
                   </h1>
-                  <p className="text-xs text-slate-600 font-medium">
+                  <p className="text-xs text-slate-600 font-medium hidden sm:block">
                     AI-powered medical assistant
                   </p>
                 </div>
               </div>
               <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="hover:bg-blue-50 hover:text-blue-600 transition-all">
-                  <LayoutDashboard className="h-4 w-4 mr-2" />
-                  Dashboard
+                <Button variant="ghost" size="sm" className="hover:bg-blue-50 hover:text-blue-600 transition-all text-xs md:text-sm px-2 md:px-3">
+                  <LayoutDashboard className="h-4 w-4 md:mr-2" />
+                  <span className="hidden sm:inline">Dashboard</span>
                 </Button>
               </Link>
             </div>

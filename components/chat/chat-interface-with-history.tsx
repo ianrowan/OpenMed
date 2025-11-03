@@ -42,7 +42,13 @@ const convertChatMessageToUIMessage = (chatMessage: any): UIMessage => ({
 
 export function ChatInterfaceWithHistory() {
   const [selectedModel, setSelectedModel] = useState<ModelType>('gpt-4.1-mini')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  // Default sidebar state based on screen size
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768 // Open on desktop (md breakpoint), closed on mobile
+    }
+    return true // Default to open for SSR
+  })
   const [demoMode, setDemoMode] = useState(false)
   const [chatError, setChatError] = useState<{
     message: string
@@ -145,10 +151,18 @@ export function ChatInterfaceWithHistory() {
   const handleNewChat = async () => {
     await createNewConversation()
     setMessages([])
+    // Close sidebar on mobile after creating new chat
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setSidebarOpen(false)
+    }
   }
 
   const handleConversationSelect = async (conversationId: string) => {
     await loadConversation(conversationId)
+    // Close sidebar on mobile after selecting conversation
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setSidebarOpen(false)
+    }
   }
 
   const handleChatSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -175,10 +189,17 @@ export function ChatInterfaceWithHistory() {
 
   return (
     <div className="flex h-full max-h-full">
-      {/* Sidebar */}
+      {/* Sidebar - Overlay on mobile, sidebar on desktop */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       <div className={cn(
         "transition-all duration-300 ease-in-out border-r bg-background",
-        sidebarOpen ? "w-80" : "w-0 border-r-0"
+        "fixed md:relative inset-y-0 left-0 z-30 md:z-0",
+        sidebarOpen ? "w-72 md:w-80" : "w-0 -translate-x-full md:translate-x-0 border-r-0"
       )}>
         <div className={cn(
           "h-full overflow-hidden",
@@ -197,39 +218,41 @@ export function ChatInterfaceWithHistory() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 w-full md:w-auto">
         {!hasMessages ? (
           <div className="flex h-full flex-col">
             {/* Fixed header area with model selector and sidebar toggle */}
-            <div className="border-b border-slate-200 p-4 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+            <div className="border-b border-slate-200 p-3 md:p-4 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="hover:bg-blue-50"
+                    className="hover:bg-blue-50 flex-shrink-0"
                   >
                     {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
                   </Button>
-                  <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">OpenMed AI Chat</h1>
+                  <h1 className="text-base md:text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent truncate">OpenMed AI Chat</h1>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 rounded-lg border border-orange-200">
-                    <TestTube className="w-4 h-4 text-orange-600" />
-                    <Label htmlFor="demo-mode" className="text-sm font-medium text-slate-700">Demo</Label>
+                <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+                  <div className="hidden sm:flex items-center gap-2 px-2 md:px-3 py-1 md:py-1.5 bg-orange-50 rounded-lg border border-orange-200">
+                    <TestTube className="w-3 h-3 md:w-4 md:h-4 text-orange-600" />
+                    <Label htmlFor="demo-mode" className="text-xs md:text-sm font-medium text-slate-700">Demo</Label>
                     <Switch 
                       id="demo-mode"
                       checked={demoMode} 
                       onCheckedChange={setDemoMode}
-                      className="data-[state=checked]:bg-orange-500"
+                      className="data-[state=checked]:bg-orange-500 scale-75 md:scale-100"
                     />
                   </div>
-                  <ModelSelector
-                    selectedModel={selectedModel}
-                    onModelChange={handleModelChange}
-                    disabled={isLoading}
-                  />
+                  <div className="hidden sm:block">
+                    <ModelSelector
+                      selectedModel={selectedModel}
+                      onModelChange={handleModelChange}
+                      disabled={isLoading}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -331,12 +354,12 @@ export function ChatInterfaceWithHistory() {
                 </div>
               )}
               
-              <form onSubmit={handleChatSubmit} className="flex gap-3 max-w-3xl mx-auto">
+              <form onSubmit={handleChatSubmit} className="flex gap-2 md:gap-3 max-w-3xl mx-auto">
                 <Textarea
                   value={input}
                   onChange={handleInputChange}
-                  placeholder="Ask about your health data... (e.g., 'What are my out of range biomarkers?')"
-                  className="flex-1 min-h-[40px] max-h-[120px] resize-none border-2 focus:border-blue-300 shadow-sm"
+                  placeholder="Ask about your health data..."
+                  className="flex-1 min-h-[40px] max-h-[120px] resize-none border-2 focus:border-blue-300 shadow-sm text-sm md:text-base"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()
@@ -353,43 +376,45 @@ export function ChatInterfaceWithHistory() {
         ) : (
           <div className="flex h-full flex-col">
             {/* Fixed header area with model selector and sidebar toggle */}
-            <div className="border-b border-slate-200 p-4 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+            <div className="border-b border-slate-200 p-3 md:p-4 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="hover:bg-blue-50"
+                    className="hover:bg-blue-50 flex-shrink-0"
                   >
                     {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
                   </Button>
-                  <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent truncate max-w-xs md:max-w-md">
+                  <h1 className="text-base md:text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent truncate max-w-[150px] sm:max-w-xs md:max-w-md">
                     {currentConversation?.title || 'OpenMed AI Chat'}
                   </h1>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Link href="/dashboard">
-                    <Button variant="ghost" size="sm" className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 transition-all">
+                <div className="flex items-center gap-1 md:gap-3 flex-shrink-0">
+                  <Link href="/dashboard" className="hidden xs:block">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1 md:gap-2 hover:bg-blue-50 hover:text-blue-600 transition-all px-2 md:px-3">
                       <LayoutDashboard className="w-4 h-4" />
-                      <span className="hidden sm:inline font-medium">Dashboard</span>
+                      <span className="hidden sm:inline font-medium text-xs md:text-sm">Dashboard</span>
                     </Button>
                   </Link>
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 rounded-lg border border-orange-200">
-                    <TestTube className="w-4 h-4 text-orange-600" />
-                    <Label htmlFor="demo-mode-messages" className="text-sm font-medium text-slate-700">Demo</Label>
+                  <div className="hidden sm:flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 bg-orange-50 rounded-lg border border-orange-200">
+                    <TestTube className="w-3 h-3 md:w-4 md:h-4 text-orange-600" />
+                    <Label htmlFor="demo-mode-messages" className="text-xs md:text-sm font-medium text-slate-700">Demo</Label>
                     <Switch 
                       id="demo-mode-messages"
                       checked={demoMode} 
                       onCheckedChange={setDemoMode}
-                      className="data-[state=checked]:bg-orange-500"
+                      className="data-[state=checked]:bg-orange-500 scale-75 md:scale-100"
                     />
                   </div>
-                  <ModelSelector
-                    selectedModel={selectedModel}
-                    onModelChange={handleModelChange}
-                    disabled={isLoading}
-                  />
+                  <div className="hidden sm:block">
+                    <ModelSelector
+                      selectedModel={selectedModel}
+                      onModelChange={handleModelChange}
+                      disabled={isLoading}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -467,12 +492,12 @@ export function ChatInterfaceWithHistory() {
                 </div>
               )}
               
-              <form onSubmit={handleChatSubmit} className="flex gap-3 max-w-4xl mx-auto">
+              <form onSubmit={handleChatSubmit} className="flex gap-2 md:gap-3 max-w-4xl mx-auto">
                 <Textarea
                   value={input}
                   onChange={handleInputChange}
                   placeholder="Ask about your health data..."
-                  className="flex-1 min-h-[40px] max-h-[120px] resize-none border-2 focus:border-blue-300 shadow-sm"
+                  className="flex-1 min-h-[40px] max-h-[120px] resize-none border-2 focus:border-blue-300 shadow-sm text-sm md:text-base"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()
