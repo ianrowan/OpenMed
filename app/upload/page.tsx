@@ -14,6 +14,7 @@ import Link from 'next/link'
 import BloodworkUploader from '@/components/uploads/BloodworkUploader'
 import GeneticUploader from '@/components/uploads/GeneticUploader'
 import { BloodworkDialog } from '@/components/dialogs/bloodwork-dialog'
+import { FormatExamplesDialog } from '@/components/dialogs/format-examples-dialog'
 import type { ParsedBloodwork } from '@/lib/parsers/bloodwork-parser'
 import type { ParsedGeneticData } from '@/lib/parsers/genetic-parser'
 
@@ -106,8 +107,10 @@ export default function UploadPage() {
           </Button>
         </div>
 
-        {/* Privacy Dialog */}
+        {/* Info Buttons */}
         <div className="mb-8 flex gap-3">
+          <FormatExamplesDialog />
+          
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="flex items-center gap-2 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600 transition-all">

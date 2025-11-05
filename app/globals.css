@@ -98,3 +98,13 @@
 .medical-timeline-item {
   @apply flex gap-4 pb-4 border-b border-border last:border-b-0;
 }
+
+/* Shimmer animation for loading states */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
