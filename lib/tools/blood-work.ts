@@ -37,6 +37,9 @@ export class BloodWorkTool {
           .order('test_date', { ascending: false })
       }
 
+      // Store original date range for potential retry
+      const originalDateRange = params?.date_range
+
       // Apply filters
       if (params?.date_range) {
         if (params.date_range.start) {
@@ -57,25 +60,75 @@ export class BloodWorkTool {
 
       if (error) throw error
 
-      // Map data from the blood_test_results table to our BloodTestResult type
-      const bloodTests: BloodTestResult[] = data.map((row: any) => ({
-        id: row.id,
-        user_id: row.user_id,
-        test_date: row.test_date,
-        lab_name: row.lab_name,
-        biomarkers: (row.biomarkers || []).map((biomarker: any) => ({
-          name: biomarker.biomarker, // Transform 'biomarker' field to 'name'
-          value: biomarker.value,
-          unit: biomarker.unit,
-          reference_range: {
-            min: biomarker.referenceMin || 0, // Transform referenceMin to reference_range.min
-            max: biomarker.referenceMax || 0  // Transform referenceMax to reference_range.max
-          },
-          status: biomarker.status,
-          notes: biomarker.interpretation // Map interpretation to notes
-        })),
-        uploaded_at: row.uploaded_at
-      }))
+      // If no data returned and a date range was specified, retry without date range
+      let bloodTests: BloodTestResult[] = []
+      
+      if (data.length === 0 && originalDateRange) {
+        console.log('[BloodWorkTool] No data found with date range, retrying without date filter...')
+        
+        // Retry without date range
+        let retryQuery
+        if (this.demoMode) {
+          retryQuery = this.supabase
+            .from('demo_blood_test_results')
+            .select('*')
+            .order('test_date', { ascending: false })
+        } else {
+          const userId = await this.getCurrentUserId()
+          retryQuery = this.supabase
+            .from('blood_test_results')
+            .select('*')
+            .eq('user_id', userId)
+            .order('test_date', { ascending: false })
+        }
+
+        if (params?.test_id) {
+          retryQuery = retryQuery.eq('id', params.test_id);
+        }
+
+        const { data: retryData, error: retryError } = await retryQuery
+        if (retryError) throw retryError
+        
+        // Map the retry data
+        bloodTests = (retryData || []).map((row: any) => ({
+          id: row.id,
+          user_id: row.user_id,
+          test_date: row.test_date,
+          lab_name: row.lab_name,
+          biomarkers: (row.biomarkers || []).map((biomarker: any) => ({
+            name: biomarker.biomarker,
+            value: biomarker.value,
+            unit: biomarker.unit,
+            reference_range: {
+              min: biomarker.referenceMin || 0,
+              max: biomarker.referenceMax || 0
+            },
+            status: biomarker.status,
+            notes: biomarker.interpretation
+          })),
+          uploaded_at: row.uploaded_at
+        }))
+      } else {
+        // Map data from the blood_test_results table to our BloodTestResult type
+        bloodTests = data.map((row: any) => ({
+          id: row.id,
+          user_id: row.user_id,
+          test_date: row.test_date,
+          lab_name: row.lab_name,
+          biomarkers: (row.biomarkers || []).map((biomarker: any) => ({
+            name: biomarker.biomarker, // Transform 'biomarker' field to 'name'
+            value: biomarker.value,
+            unit: biomarker.unit,
+            reference_range: {
+              min: biomarker.referenceMin || 0, // Transform referenceMin to reference_range.min
+              max: biomarker.referenceMax || 0  // Transform referenceMax to reference_range.max
+            },
+            status: biomarker.status,
+            notes: biomarker.interpretation // Map interpretation to notes
+          })),
+          uploaded_at: row.uploaded_at
+        }))
+      }
       
 
       // Transform data from upload format to internal BloodTestResult format
@@ -89,10 +142,22 @@ export class BloodWorkTool {
           ...test,
           biomarkers: test.biomarkers.filter(marker => 
             params.markers!.some(m => {
-              // Split query into tokens and check all are present in marker name
-              const queryTokens = m.toLowerCase().split(/\s+/).filter(token => token.length > 0)
-              const markerName = marker.name.toLowerCase()
-              return queryTokens.every(token => markerName.includes(token))
+              // Normalize both query and marker name: remove punctuation, collapse whitespace
+              // This handles variations like "LDL Cholesterol" vs "LDL-Cholesterol"
+              const normalizeText = (text: string) => {
+                return text
+                  .toLowerCase()
+                  .replace(/[^\w\s]/g, ' ')  // Replace punctuation with spaces
+                  .replace(/\s+/g, ' ')       // Collapse multiple spaces
+                  .trim()
+              }
+              
+              const normalizedQuery = normalizeText(m)
+              const normalizedMarker = normalizeText(marker.name)
+              
+              // Check if normalized marker contains all tokens from normalized query
+              const queryTokens = normalizedQuery.split(' ').filter(token => token.length > 0)
+              return queryTokens.every(token => normalizedMarker.includes(token))
             })
           )
         })).filter(test => test.biomarkers.length > 0);
