@@ -16,23 +16,26 @@ export function ChatMessage({ message }: ChatMessageProps) {
   
   return (
     <div className={cn(
-      "flex w-full gap-3 px-2 sm:px-0",
+      "flex w-full gap-2 sm:gap-3 px-2 sm:px-0",
       isUser ? "justify-end" : "justify-start"
     )}>
-      <div className={cn(
-        "flex flex-col gap-1 min-w-0",
-        isUser ? "items-end max-w-[85%] sm:max-w-[75%]" : "items-start max-w-full"
-      )}>
-        {/* Message bubble for user, plain text for AI */}
-        {isUser ? (
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl px-4 py-2.5 shadow-sm">
+      {isUser ? (
+        <>
+          {/* User message bubble */}
+          <div className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl px-4 py-2.5 shadow-sm max-w-[75%] sm:max-w-[70%]">
             <div className="whitespace-pre-wrap text-sm break-words">
               {message.content}
             </div>
           </div>
-        ) : (
-          <div className="text-sm text-slate-800 max-w-3xl">
-            <ReactMarkdown 
+          {/* User avatar */}
+          <div className="flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full bg-slate-700 shadow-sm">
+            <User className="h-4 w-4 text-white" />
+          </div>
+        </>
+      ) : (
+        /* AI message - plain text without avatar */
+        <div className="text-sm text-slate-800 max-w-full sm:max-w-3xl">
+          <ReactMarkdown 
               remarkPlugins={[remarkGfm]}
               components={{
                 h1: ({ children }) => <h1 className="text-lg sm:text-xl font-bold mb-3 mt-4 text-slate-900 break-words">{children}</h1>,
@@ -62,14 +65,6 @@ export function ChatMessage({ message }: ChatMessageProps) {
               {message.content}
             </ReactMarkdown>
           </div>
-        )}
-      </div>
-      
-      {/* User avatar - only show for user */}
-      {isUser && (
-        <div className="flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full bg-slate-700 shadow-sm">
-          <User className="h-4 w-4 text-white" />
-        </div>
       )}
     </div>
   )

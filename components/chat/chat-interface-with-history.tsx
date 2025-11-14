@@ -188,7 +188,7 @@ export function ChatInterfaceWithHistory() {
   const hasMessages = messages.length > 0
 
   return (
-    <div className="flex h-full max-h-full">
+    <div className="flex h-screen max-h-screen">
       {/* Sidebar - Overlay on mobile, sidebar on desktop */}
       {sidebarOpen && (
         <div 
@@ -218,27 +218,27 @@ export function ChatInterfaceWithHistory() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0 w-full md:w-auto">
+      <div className="flex-1 flex flex-col min-w-0 w-full md:w-auto h-full">
         {!hasMessages ? (
           <div className="flex h-full flex-col">
             {/* Compact header with logo */}
-            <div className="border-b border-slate-200 px-3 py-2 md:px-4 md:py-2.5 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
-              <div className="flex items-center justify-between gap-2 md:gap-4">
+            <div className="border-b border-slate-200 px-2 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2.5 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
+              <div className="flex items-center justify-between gap-1 sm:gap-2 md:gap-4">
                 {/* Left side: Menu + Logo */}
-                <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-0 flex-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="hover:bg-blue-50 flex-shrink-0 h-8 w-8 p-0"
+                    className="hover:bg-blue-50 flex-shrink-0 h-7 w-7 sm:h-8 sm:w-8 p-0"
                   >
-                    {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                    {sidebarOpen ? <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Menu className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                   </Button>
                   
                   {/* Logo + Brand */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className="w-7 h-7 md:w-8 md:h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
-                      <Activity className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                  <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+                      <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
                     </div>
                     <span className="hidden sm:inline text-sm md:text-base font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                       OpenMed
@@ -247,17 +247,17 @@ export function ChatInterfaceWithHistory() {
                 </div>
                 
                 {/* Right side: Dashboard + Demo + Model */}
-                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                  <Link href="/dashboard">
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5 hover:bg-blue-50 hover:text-blue-600 transition-all h-8 px-2 md:px-3">
-                      <LayoutDashboard className="w-4 h-4" />
+                <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
+                  <Link href="/dashboard" className="hidden sm:block">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5 hover:bg-blue-50 hover:text-blue-600 transition-all h-7 sm:h-8 px-1.5 sm:px-2 md:px-3">
+                      <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       <span className="hidden lg:inline font-medium text-xs">Dashboard</span>
                     </Button>
                   </Link>
                   
-                  <div className="flex items-center gap-1.5 px-2 py-1 bg-orange-50 rounded-lg border border-orange-200">
-                    <TestTube className="w-3.5 h-3.5 text-orange-600" />
-                    <Label htmlFor="demo-mode" className="text-xs font-medium text-slate-700 hidden sm:inline">Demo</Label>
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-1 bg-orange-50 rounded-lg border border-orange-200">
+                    <TestTube className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-600" />
+                    <Label htmlFor="demo-mode" className="text-xs font-medium text-slate-700 hidden md:inline">Demo</Label>
                     <Switch 
                       id="demo-mode"
                       checked={demoMode} 
@@ -266,11 +266,13 @@ export function ChatInterfaceWithHistory() {
                     />
                   </div>
                   
-                  <ModelSelector
-                    selectedModel={selectedModel}
-                    onModelChange={handleModelChange}
-                    disabled={isLoading}
-                  />
+                  <div className="scale-90 sm:scale-100">
+                    <ModelSelector
+                      selectedModel={selectedModel}
+                      onModelChange={handleModelChange}
+                      disabled={isLoading}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -278,147 +280,157 @@ export function ChatInterfaceWithHistory() {
             {/* Custom API Key Banner */}
             <CustomKeyBanner />
 
-            {/* Welcome content area */}
-            <div className="flex-1 flex flex-col items-center justify-center space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8 min-h-0 bg-white overflow-y-auto">
-              <div className="text-center space-y-3 sm:space-y-4 max-w-2xl px-2">
-                <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
-                  <Activity className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+            {/* Welcome content area - scrollable with fixed input at bottom */}
+            <div className="flex-1 relative min-h-0 overflow-hidden">
+              {/* Scrollable welcome content */}
+              <div className="absolute inset-0 overflow-y-auto overflow-x-hidden bg-white">
+                <div className="flex flex-col items-center justify-center space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8 min-h-full">
+                  <div className="text-center space-y-3 sm:space-y-4 max-w-2xl px-2">
+                    <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
+                      <Activity className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                    </div>
+                    <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Welcome to OpenMed AI</h2>
+                    <p className="text-sm sm:text-base text-slate-600 max-w-md mx-auto font-medium">
+                      {demoMode ? (
+                        <>
+                          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 rounded-lg text-xs sm:text-sm font-semibold mb-3 shadow-sm border border-orange-200">
+                            <TestTube className="w-3 h-3 sm:w-4 sm:h-4" />
+                            Demo Mode Active
+                          </span>
+                          <br />
+                          You're chatting with sample medical data. Toggle off Demo Mode to use your own data.
+                        </>
+                      ) : (
+                        <>
+                          Upload your medical data and start chatting to gain insights about your health.
+                          I can analyze blood work, genetic data, and search medical literature.
+                        </>
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 sm:gap-4 md:grid-cols-2 max-w-2xl w-full px-2">
+                    <Link href="/upload" className="group">
+                      <Card className="cursor-pointer border-2 hover:border-blue-300 transition-all hover:shadow-xl bg-white/80 backdrop-blur-sm h-full hover:scale-105 transform duration-200">
+                        <CardHeader className="pb-3 p-4 sm:p-6">
+                          <CardTitle className="text-base sm:text-lg flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700">
+                            <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 group-hover:text-blue-700" />
+                            Upload Data
+                          </CardTitle>
+                          <CardDescription className="text-xs sm:text-sm text-slate-600 font-medium">
+                            Upload blood work, genetic test results, or other medical data
+                          </CardDescription>
+                        </CardHeader>
+                      </Card>
+                    </Link>
+
+                    <Card className="cursor-pointer border-2 hover:border-purple-300 transition-all hover:shadow-xl bg-white/80 backdrop-blur-sm h-full hover:scale-105 transform duration-200">
+                      <CardHeader className="pb-3 p-4 sm:p-6">
+                        <CardTitle className="text-base sm:text-lg bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Example Questions</CardTitle>
+                        <CardDescription className="text-xs sm:text-sm text-slate-600 font-medium">
+                          Try asking about biomarker trends, genetic variants, or health correlations
+                        </CardDescription>
+                      </CardHeader>
+                    </Card>
+                  </div>
+
+                  <div className="mt-2 sm:mt-4 px-2 w-full max-w-2xl flex justify-center">
+                    <BloodworkDialog triggerText="Need Bloodwork? Get comprehensive testing" triggerSize="default" className="w-full sm:w-auto shadow-lg hover:shadow-xl transition-shadow" />
+                  </div>
+                  
+                  {/* Extra padding at bottom to prevent content from being hidden under input */}
+                  <div className="h-32 sm:h-36 md:h-40" />
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Welcome to OpenMed AI</h2>
-                <p className="text-sm sm:text-base text-slate-600 max-w-md mx-auto font-medium">
-                  {demoMode ? (
-                    <>
-                      <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 rounded-lg text-xs sm:text-sm font-semibold mb-3 shadow-sm border border-orange-200">
-                        <TestTube className="w-3 h-3 sm:w-4 sm:h-4" />
-                        Demo Mode Active
-                      </span>
-                      <br />
-                      You're chatting with sample medical data. Toggle off Demo Mode to use your own data.
-                    </>
-                  ) : (
-                    <>
-                      Upload your medical data and start chatting to gain insights about your health.
-                      I can analyze blood work, genetic data, and search medical literature.
-                    </>
-                  )}
-                </p>
               </div>
 
-              <div className="grid gap-3 sm:gap-4 md:grid-cols-2 max-w-2xl w-full px-2">
-                <Link href="/upload" className="group">
-                  <Card className="cursor-pointer border-2 hover:border-blue-300 transition-all hover:shadow-xl bg-white/80 backdrop-blur-sm h-full hover:scale-105 transform duration-200">
-                    <CardHeader className="pb-3 p-4 sm:p-6">
-                      <CardTitle className="text-base sm:text-lg flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent group-hover:from-blue-700 group-hover:to-indigo-700">
-                        <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 group-hover:text-blue-700" />
-                        Upload Data
-                      </CardTitle>
-                      <CardDescription className="text-xs sm:text-sm text-slate-600 font-medium">
-                        Upload blood work, genetic test results, or other medical data
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                </Link>
-
-                <Card className="cursor-pointer border-2 hover:border-purple-300 transition-all hover:shadow-xl bg-white/80 backdrop-blur-sm h-full hover:scale-105 transform duration-200">
-                  <CardHeader className="pb-3 p-4 sm:p-6">
-                    <CardTitle className="text-base sm:text-lg bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Example Questions</CardTitle>
-                    <CardDescription className="text-xs sm:text-sm text-slate-600 font-medium">
-                      Try asking about biomarker trends, genetic variants, or health correlations
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </div>
-
-              <div className="mt-2 sm:mt-4 px-2 w-full max-w-2xl flex justify-center">
-                <BloodworkDialog triggerText="Need Bloodwork? Get comprehensive testing" triggerSize="default" className="w-full sm:w-auto shadow-lg hover:shadow-xl transition-shadow" />
-              </div>
-            </div>
-
-            {/* Floating chat input area at bottom */}
-            <div className="bg-white p-3 sm:p-4 md:p-6 flex-shrink-0">
-              {/* Error display */}
-              {chatError && (
-                <div className="mb-3 space-y-2 w-full max-w-full px-1">
-                  {chatError.type === 'USAGE_LIMIT_EXCEEDED' && chatError.details ? (
-                    <UsageLimitError
-                      modelTier={chatError.details.modelTier}
-                      resetTime={chatError.details.resetTime}
-                      className="w-full max-w-full sm:max-w-3xl md:max-w-3xl mx-auto"
-                    />
-                  ) : (
-                    <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 rounded-lg p-4 w-full max-w-full sm:max-w-3xl md:max-w-3xl mx-auto shadow-md">
-                      <div className="flex">
-                        <div className="ml-3">
-                          <h3 className="text-sm font-semibold text-red-800">
-                            Error
-                          </h3>
-                          <div className="mt-2 text-sm text-red-700 font-medium">
-                            {chatError.message}
+              {/* Floating chat input area at bottom - positioned absolutely */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent pointer-events-none z-10">
+                <div className="p-3 sm:p-4 md:p-6 pointer-events-auto">
+                  {/* Error display */}
+                  {chatError && (
+                    <div className="mb-3 space-y-2 w-full max-w-full px-1">
+                      {chatError.type === 'USAGE_LIMIT_EXCEEDED' && chatError.details ? (
+                        <UsageLimitError
+                          modelTier={chatError.details.modelTier}
+                          resetTime={chatError.details.resetTime}
+                          className="w-full max-w-full sm:max-w-3xl md:max-w-3xl mx-auto"
+                        />
+                      ) : (
+                        <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 rounded-lg p-4 w-full max-w-full sm:max-w-3xl md:max-w-3xl mx-auto shadow-md">
+                          <div className="flex">
+                            <div className="ml-3">
+                              <h3 className="text-sm font-semibold text-red-800">
+                                Error
+                              </h3>
+                              <div className="mt-2 text-sm text-red-700 font-medium">
+                                {chatError.message}
+                              </div>
+                            </div>
                           </div>
                         </div>
+                      )}
+                      <div className="text-center">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setChatError(null)}
+                          className="text-xs hover:bg-red-50"
+                        >
+                          Dismiss
+                        </Button>
                       </div>
                     </div>
                   )}
-                  <div className="text-center">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => setChatError(null)}
-                      className="text-xs hover:bg-red-50"
-                    >
-                      Dismiss
-                    </Button>
-                  </div>
+                  
+                  <form onSubmit={handleChatSubmit} className="w-full max-w-full sm:max-w-3xl md:max-w-4xl mx-auto">
+                    <div className="bg-white rounded-3xl shadow-lg border border-slate-200 p-2 flex gap-2 items-end hover:shadow-xl transition-shadow">
+                      <Textarea
+                        value={input}
+                        onChange={handleInputChange}
+                        placeholder="Ask about your health data..."
+                        rows={1}
+                        className="flex-1 min-h-[44px] max-h-[120px] resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none text-sm md:text-base px-2 py-2.5"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault()
+                            handleChatSubmit(e as any)
+                          }
+                        }}
+                      />
+                      <Button 
+                        type="submit" 
+                        disabled={!input.trim() || isLoading} 
+                        size="icon"
+                        className="rounded-full h-10 w-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all flex-shrink-0"
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </form>
                 </div>
-              )}
-              
-              <form onSubmit={handleChatSubmit} className="w-full max-w-full sm:max-w-3xl md:max-w-4xl mx-auto">
-                <div className="bg-white rounded-3xl shadow-lg border border-slate-200 p-2 flex gap-2 items-end hover:shadow-xl transition-shadow">
-                  <Textarea
-                    value={input}
-                    onChange={handleInputChange}
-                    placeholder="Ask about your health data..."
-                    rows={1}
-                    className="flex-1 min-h-[44px] max-h-[120px] resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none text-sm md:text-base px-2 py-2.5"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        handleChatSubmit(e as any)
-                      }
-                    }}
-                  />
-                  <Button 
-                    type="submit" 
-                    disabled={!input.trim() || isLoading} 
-                    size="icon"
-                    className="rounded-full h-10 w-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all flex-shrink-0"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
-              </form>
+              </div>
             </div>
           </div>
         ) : (
           <div className="flex h-full flex-col">
             {/* Compact header with logo */}
-            <div className="border-b border-slate-200 px-3 py-2 md:px-4 md:py-2.5 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
-              <div className="flex items-center justify-between gap-2 md:gap-4">
+            <div className="border-b border-slate-200 px-2 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2.5 bg-white/80 backdrop-blur-md flex-shrink-0 shadow-sm sticky top-0 z-10">
+              <div className="flex items-center justify-between gap-1 sm:gap-2 md:gap-4">
                 {/* Left side: Menu + Logo + Title */}
-                <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-0 flex-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="hover:bg-blue-50 flex-shrink-0 h-8 w-8 p-0"
+                    className="hover:bg-blue-50 flex-shrink-0 h-7 w-7 sm:h-8 sm:w-8 p-0"
                   >
-                    {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                    {sidebarOpen ? <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Menu className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                   </Button>
                   
                   {/* Logo + Brand */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className="w-7 h-7 md:w-8 md:h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
-                      <Activity className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                  <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-sm">
+                      <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
                     </div>
                     <span className="hidden sm:inline text-sm md:text-base font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                       OpenMed
@@ -437,17 +449,17 @@ export function ChatInterfaceWithHistory() {
                 </div>
                 
                 {/* Right side: Dashboard + Demo + Model */}
-                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                  <Link href="/dashboard">
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5 hover:bg-blue-50 hover:text-blue-600 transition-all h-8 px-2 md:px-3">
-                      <LayoutDashboard className="w-4 h-4" />
+                <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0">
+                  <Link href="/dashboard" className="hidden sm:block">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5 hover:bg-blue-50 hover:text-blue-600 transition-all h-7 sm:h-8 px-1.5 sm:px-2 md:px-3">
+                      <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       <span className="hidden lg:inline font-medium text-xs">Dashboard</span>
                     </Button>
                   </Link>
                   
-                  <div className="flex items-center gap-1.5 px-2 py-1 bg-orange-50 rounded-lg border border-orange-200">
-                    <TestTube className="w-3.5 h-3.5 text-orange-600" />
-                    <Label htmlFor="demo-mode-messages" className="text-xs font-medium text-slate-700 hidden sm:inline">Demo</Label>
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-1 bg-orange-50 rounded-lg border border-orange-200">
+                    <TestTube className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-600" />
+                    <Label htmlFor="demo-mode-messages" className="text-xs font-medium text-slate-700 hidden md:inline">Demo</Label>
                     <Switch 
                       id="demo-mode-messages"
                       checked={demoMode} 
@@ -456,11 +468,13 @@ export function ChatInterfaceWithHistory() {
                     />
                   </div>
                   
-                  <ModelSelector
-                    selectedModel={selectedModel}
-                    onModelChange={handleModelChange}
-                    disabled={isLoading}
-                  />
+                  <div className="scale-90 sm:scale-100">
+                    <ModelSelector
+                      selectedModel={selectedModel}
+                      onModelChange={handleModelChange}
+                      disabled={isLoading}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -469,9 +483,9 @@ export function ChatInterfaceWithHistory() {
             <CustomKeyBanner />
 
             {/* Messages and input container - allows input to float over messages */}
-            <div className="flex-1 relative min-h-0">
+            <div className="flex-1 relative min-h-0 overflow-hidden">
               {/* Scrollable messages area */}
-              <div className="absolute inset-0 overflow-y-auto p-2 sm:p-4 md:p-6 space-y-4 bg-white">
+              <div className="absolute inset-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 md:p-6 space-y-4 bg-white">
                 {messages.map((message, index) => (
                   <div key={message.id} className="space-y-4 w-full max-w-full sm:max-w-3xl md:max-w-4xl mx-auto">
                     {/* Show loading animation above tool cards for the last assistant message being processed */}
