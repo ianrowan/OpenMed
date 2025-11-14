@@ -423,9 +423,9 @@ export function ChatInterfaceWithHistory() {
             <CustomKeyBanner />
 
             {/* Scrollable messages area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 space-y-4 min-h-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
               {messages.map((message, index) => (
-                <div key={message.id} className="space-y-4 max-w-4xl mx-auto">
+                <div key={message.id} className="space-y-4 w-full max-w-full sm:max-w-3xl md:max-w-4xl mx-auto">
                   {/* Show loading animation above tool cards for the last assistant message being processed */}
                   {message.role === 'assistant' && isLoading && index === messages.length - 1 && (
                     <AIProcessingStages />
@@ -445,7 +445,7 @@ export function ChatInterfaceWithHistory() {
               
               {/* Show loading animation when starting a new response (no assistant message yet) */}
               {isLoading && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
-                <div className="space-y-4">
+                <div className="space-y-4 w-full max-w-full sm:max-w-3xl md:max-w-4xl mx-auto">
                   <AIProcessingStages />
                 </div>
               )}
@@ -455,24 +455,24 @@ export function ChatInterfaceWithHistory() {
             </div>
 
             {/* Fixed chat input area at bottom */}
-            <div className="border-t border-slate-200 p-6 bg-white/80 backdrop-blur-md flex-shrink-0 space-y-4 shadow-sm">
+            <div className="border-t border-slate-200 p-3 sm:p-4 md:p-6 bg-white/80 backdrop-blur-md flex-shrink-0 space-y-4 shadow-sm">
               {/* Error display */}
               {chatError && (
-                <div className="space-y-2">
+                <div className="space-y-2 w-full max-w-full px-1">
                   {chatError.type === 'USAGE_LIMIT_EXCEEDED' && chatError.details ? (
                     <UsageLimitError
                       modelTier={chatError.details.modelTier}
                       resetTime={chatError.details.resetTime}
-                      className="max-w-3xl mx-auto"
+                      className="w-full max-w-full sm:max-w-3xl md:max-w-3xl mx-auto"
                     />
                   ) : (
-                    <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 rounded-lg p-4 max-w-3xl mx-auto shadow-md">
+                    <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 rounded-lg p-4 w-full max-w-full sm:max-w-3xl md:max-w-3xl mx-auto shadow-md">
                       <div className="flex">
                         <div className="ml-3">
                           <h3 className="text-sm font-semibold text-red-800">
                             Error
                           </h3>
-                          <div className="mt-2 text-sm text-red-700 font-medium">
+                          <div className="mt-2 text-sm text-red-700 font-medium break-words">
                             {chatError.message}
                           </div>
                         </div>
@@ -492,7 +492,7 @@ export function ChatInterfaceWithHistory() {
                 </div>
               )}
               
-              <form onSubmit={handleChatSubmit} className="flex gap-2 md:gap-3 max-w-4xl mx-auto">
+              <form onSubmit={handleChatSubmit} className="flex gap-2 md:gap-3 w-full max-w-full sm:max-w-3xl md:max-w-4xl mx-auto">
                 <Textarea
                   value={input}
                   onChange={handleInputChange}
@@ -505,7 +505,7 @@ export function ChatInterfaceWithHistory() {
                     }
                   }}
                 />
-                <Button type="submit" disabled={!input.trim() || isLoading} className="self-end bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all">
+                <Button type="submit" disabled={!input.trim() || isLoading} className="self-end bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all flex-shrink-0">
                   <Send className="w-4 h-4" />
                 </Button>
               </form>

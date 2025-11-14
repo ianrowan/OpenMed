@@ -75,28 +75,28 @@ export function ToolCallVisualization({ toolCall }: ToolCallVisualizationProps) 
   }
 
   return (
-    <div className="tool-execution my-4">
+    <div className="tool-execution my-2 sm:my-4 w-full max-w-full overflow-hidden">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <Card>
+        <Card className="overflow-hidden">
           <CollapsibleTrigger asChild>
-            <CardHeader className="pb-3 cursor-pointer hover:bg-accent/50 transition-colors">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <span>{getToolIcon(toolCall.toolName)}</span>
-                  {getToolTitle(toolCall.toolName)}
+            <CardHeader className="pb-3 cursor-pointer hover:bg-accent/50 transition-colors p-3 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-sm sm:text-base md:text-lg flex items-center gap-2 min-w-0 flex-1">
+                  <span className="flex-shrink-0">{getToolIcon(toolCall.toolName)}</span>
+                  <span className="truncate">{getToolTitle(toolCall.toolName)}</span>
                 </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge variant={toolCall.state === 'result' ? 'default' : 'secondary'} className="flex items-center gap-1">
+                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                  <Badge variant={toolCall.state === 'result' ? 'default' : 'secondary'} className="flex items-center gap-1 text-xs">
                     {getStatusIcon()}
-                    {getStatusText()}
+                    <span className="hidden xs:inline">{getStatusText()}</span>
                   </Badge>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0">
                     {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
               {toolCall.args && !isOpen && (
-                <CardDescription>
+                <CardDescription className="text-xs sm:text-sm truncate">
                   Query: {JSON.stringify(toolCall.args, null, 2).substring(0, 100)}
                   {JSON.stringify(toolCall.args).length > 100 && '...'}
                 </CardDescription>
@@ -106,12 +106,12 @@ export function ToolCallVisualization({ toolCall }: ToolCallVisualizationProps) 
           
           <CollapsibleContent>
             {toolCall.args && (
-              <div className="px-6 pb-3 border-t">
+              <div className="px-3 sm:px-6 pb-3 border-t">
                 <details className="text-sm text-muted-foreground">
-                  <summary className="cursor-pointer text-xs font-medium hover:text-foreground transition-colors">
+                  <summary className="cursor-pointer text-xs font-medium hover:text-foreground transition-colors py-2">
                     Query Parameters
                   </summary>
-                  <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-x-auto border">
+                  <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-x-auto border break-all whitespace-pre-wrap max-w-full">
                     {JSON.stringify(toolCall.args, null, 2)}
                   </pre>
                 </details>
@@ -119,12 +119,12 @@ export function ToolCallVisualization({ toolCall }: ToolCallVisualizationProps) 
             )}
             
             {toolCall.result && toolCall.state === 'result' && (
-              <CardContent>
+              <CardContent className="p-3 sm:p-6 overflow-hidden">
                 {toolCall.toolName === 'queryBloodWork' && (
                   toolCall.result.data?.blood_test_results && toolCall.result.data.blood_test_results.length > 0 ? (
                     <BloodWorkVisualization data={toolCall.result.data.blood_test_results[0]} />
                   ) : (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground break-words">
                       {toolCall.result.summary || 'No blood work data available'}
                     </div>
                   )
@@ -135,21 +135,21 @@ export function ToolCallVisualization({ toolCall }: ToolCallVisualizationProps) 
                   ) : toolCall.result.data?.genetic_data ? (
                     <GeneticVisualization data={toolCall.result.data.genetic_data} />
                   ) : (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground break-words">
                       {toolCall.result.summary || 'No genetic data available'}
                     </div>
                   )
                 )}
                 {toolCall.toolName === 'searchMedicalLiterature' && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="space-y-2 overflow-hidden">
+                    <p className="text-sm text-muted-foreground break-words">
                       {toolCall.result.summary}
                     </p>
                     {toolCall.result.references && toolCall.result.references.length > 0 && (
                       <div className="space-y-1">
                         <h4 className="text-sm font-medium">References:</h4>
                         {toolCall.result.references.slice(0, 3).map((ref: any, index: number) => (
-                          <div key={index} className="text-xs text-muted-foreground">
+                          <div key={index} className="text-xs text-muted-foreground break-words">
                             • {ref.title} ({ref.source})
                           </div>
                         ))}
