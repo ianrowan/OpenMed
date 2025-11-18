@@ -1,4 +1,19 @@
-import { openai } from '@ai-sdk/openai'
+import { openai, createOpenAI } from '@ai-sdk/openai'
+import { createOllama } from 'ollama-ai-provider'
+import { createOllamaLanguageModel } from './ollama-custom-provider'
+
+// Check if local LLM is enabled
+export const isLocalLLMEnabled = () => {
+  return process.env.NEXT_PUBLIC_ENABLE_LOCAL_LLM === 'true'
+}
+
+// Get Ollama configuration
+export const getOllamaConfig = () => {
+  return {
+    baseURL: process.env.NEXT_PUBLIC_OLLAMA_BASE_URL || 'http://localhost:11434/api',
+    model: process.env.NEXT_PUBLIC_OLLAMA_MODEL || 'llama3.2:3b'
+  }
+}
 
 // Initialize OpenAI client (optional for demo mode)
 export const aiModel = process.env.OPENAI_API_KEY 
@@ -7,6 +22,14 @@ export const aiModel = process.env.OPENAI_API_KEY
 
 // Function to get AI model based on preference
 export const getAIModel = (modelName?: string) => {
+  // Check if local LLM is enabled first
+  if (isLocalLLMEnabled()) {
+    const config = getOllamaConfig()
+    // Use our custom provider that properly works with Ollama + tools + AI SDK v4
+    return createOllamaLanguageModel(config.model, config.baseURL)
+  }
+  
+  // Otherwise use OpenAI
   if (!process.env.OPENAI_API_KEY) return null
   
   const model = modelName || 'gpt-4.1-mini'
@@ -191,3 +214,10 @@ export const AVAILABLE_MODELS: Array<{
     tier: 'basic'
   },
 ]
+
+// Helper to get default model based on local LLM setting
+export const getDefaultModel = (): ModelType => {
+  // When using local LLM, default to gpt-4.1-mini as the type
+  // (the actual model used will be Ollama via getAIModel)
+  return 'gpt-4.1-mini'
+}

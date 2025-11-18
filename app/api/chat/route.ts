@@ -1,6 +1,6 @@
 import { streamText, tool } from 'ai'
 import { z } from 'zod'
-import { aiModel, MEDICAL_AGENT_PROMPT, getAIModel, ModelType } from '@/lib/ai'
+import { aiModel, MEDICAL_AGENT_PROMPT, getAIModel, ModelType, isLocalLLMEnabled } from '@/lib/ai'
 import { BloodWorkTool } from '@/lib/tools/blood-work'
 import { GeneticTool } from '@/lib/tools/genetics'
 import { BloodWorkQuerySchema, GeneticQuerySchema, MedicalSearchSchema } from '@/types'
@@ -105,6 +105,7 @@ export async function POST(req: Request) {
     // Check if user has a custom OpenAI API key
     const userApiKeyResult = await getUserOpenAIKey()
     const usingCustomKey = userApiKeyResult.hasCustomKey && userApiKeyResult.apiKey
+    const usingLocalLLM = isLocalLLMEnabled()
 
     let selectedModel;
     let shouldCheckUsage = true;
@@ -117,6 +118,11 @@ export async function POST(req: Request) {
       selectedModel = customOpenAI(model || 'gpt-4.1-mini')
       shouldCheckUsage = false;
       logger.debug('Using custom API key', { userId: user.id, action: 'custom_key_used' })
+    } else if (usingLocalLLM) {
+      // Using local LLM - bypass usage limits
+      selectedModel = getAIModel(model) || aiModel
+      shouldCheckUsage = false;
+      logger.debug('Using local LLM', { userId: user.id, action: 'local_llm_used' })
     } else {
       // Use system API key and check usage limits
       selectedModel = getAIModel(model) || aiModel
@@ -195,6 +201,12 @@ export async function POST(req: Request) {
 
     // Get user's medical profile for new conversations (first message)
     let systemPrompt = MEDICAL_AGENT_PROMPT
+    
+    // Add Ollama-specific instruction to prevent tool looping
+    if (isLocalLLMEnabled()) {
+      systemPrompt += `\n\nIMPORTANT: After receiving tool results, provide your complete analysis. Do not call the same tool multiple times with similar parameters.`
+    }
+    
     if (messages.length <= 1) { // First message in conversation
       try {
         const { data: medicalProfile } = await supabase
@@ -206,7 +218,7 @@ export async function POST(req: Request) {
         if (medicalProfile) {
           const profileInfo = formatMedicalProfile(medicalProfile)
           if (profileInfo) {
-            systemPrompt = MEDICAL_AGENT_PROMPT + `\n\n=== USER MEDICAL PROFILE ===\n${profileInfo}\n\nUse this profile information to provide more personalized and relevant health insights. Consider the user's age, gender, current conditions, medications, and other factors when analyzing their data and providing recommendations.`
+            systemPrompt = systemPrompt + `\n\n=== USER MEDICAL PROFILE ===\n${profileInfo}\n\nUse this profile information to provide more personalized and relevant health insights. Consider the user's age, gender, current conditions, medications, and other factors when analyzing their data and providing recommendations.`
           }
         }
       } catch (error) {
@@ -219,22 +231,28 @@ export async function POST(req: Request) {
       model: selectedModel,
       system: systemPrompt,
       messages,
-      maxSteps: 20, // Allow multiple tool execution steps
+      maxSteps: isLocalLLMEnabled() ? 3 : 10, // Lower for Ollama to prevent tool loops
       tools: {
         queryBloodWork: tool({
           description: 'Query and analyze blood test results and biomarkers. Use this to check specific biomarkers, find out-of-range values, analyze trends over time, or get a complete blood work overview.',
           parameters: BloodWorkQuerySchema,
-          execute: async (params) => await bloodWorkTool.execute(params),
+          execute: async (params) => {
+            return await bloodWorkTool.execute(params)
+          },
         }),
         queryGenetics: tool({
           description: 'Query genetic variants and SNPs from uploaded genetic data (23andMe, etc.). Use this to check for specific genes, variants, disease associations, or get a complete genetic risk profile.',
           parameters: GeneticQuerySchema,
-          execute: async (params) => await geneticTool.execute(params),
+          execute: async (params) => {
+            return await geneticTool.execute(params)
+          },
         }),
         searchMedicalLiterature: tool({
           description: 'Search medical literature, research papers, and clinical guidelines. Use this to find evidence-based information about medical conditions, treatments, correlations, or latest research on specific health topics.',
           parameters: MedicalSearchSchema,
-          execute: async (params) => await medicalSearchTool.execute(params),
+          execute: async (params) => {
+            return await medicalSearchTool.execute(params)
+          },
         }),
       },
       onFinish: async (result) => {

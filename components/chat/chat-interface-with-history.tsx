@@ -18,7 +18,7 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { BloodworkDialog } from '@/components/dialogs/bloodwork-dialog'
 import { Send, Upload, Activity, Menu, X, TestTube, LayoutDashboard } from 'lucide-react'
-import { ModelType } from '@/lib/ai'
+import { ModelType, isLocalLLMEnabled, getOllamaConfig } from '@/lib/ai'
 import { cn } from '@/lib/utils'
 import { Analytics } from '@/lib/analytics'
 import type { Message as UIMessage } from 'ai'
@@ -266,13 +266,26 @@ export function ChatInterfaceWithHistory() {
                     />
                   </div>
                   
-                  <div className="scale-90 sm:scale-100">
-                    <ModelSelector
-                      selectedModel={selectedModel}
-                      onModelChange={handleModelChange}
-                      disabled={isLoading}
-                    />
-                  </div>
+                  {/* Hide model selector when using local LLM */}
+                  {!isLocalLLMEnabled() && (
+                    <div className="scale-90 sm:scale-100">
+                      <ModelSelector
+                        selectedModel={selectedModel}
+                        onModelChange={handleModelChange}
+                        disabled={isLoading}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Ollama indicator */}
+                  {isLocalLLMEnabled() && (
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 border border-green-200 rounded-md">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-xs font-medium text-green-700">
+                        Ollama ({getOllamaConfig().model})
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -468,13 +481,26 @@ export function ChatInterfaceWithHistory() {
                     />
                   </div>
                   
-                  <div className="scale-90 sm:scale-100">
-                    <ModelSelector
-                      selectedModel={selectedModel}
-                      onModelChange={handleModelChange}
-                      disabled={isLoading}
-                    />
-                  </div>
+                  {/* Hide model selector when using local LLM */}
+                  {!isLocalLLMEnabled() && (
+                    <div className="scale-90 sm:scale-100">
+                      <ModelSelector
+                        selectedModel={selectedModel}
+                        onModelChange={handleModelChange}
+                        disabled={isLoading}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Ollama indicator */}
+                  {isLocalLLMEnabled() && (
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 border border-green-200 rounded-md">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-xs font-medium text-green-700">
+                        Ollama ({getOllamaConfig().model})
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -3,7 +3,7 @@ import { BloodWorkTool } from '@/lib/tools/blood-work'
 import { GeneticTool } from '@/lib/tools/genetics'
 import { MedicalSearchTool } from '@/lib/tools/medical-search-tool'
 import { BloodWorkQuerySchema, GeneticQuerySchema, MedicalSearchSchema } from '@/types'
-import { MEDICAL_AGENT_PROMPT, getAIModel } from '@/lib/ai'
+import { MEDICAL_AGENT_PROMPT, getAIModel, isLocalLLMEnabled } from '@/lib/ai'
 import { createClient } from '@supabase/supabase-js'
 
 const DEMO_MEDICAL_PROFILE = `
@@ -112,6 +112,7 @@ export async function POST(req: Request) {
     const systemPrompt = MEDICAL_AGENT_PROMPT + `\n\n=== USER MEDICAL PROFILE ===\n${DEMO_MEDICAL_PROFILE}\n\nUse this profile information to provide more personalized and relevant health insights. Consider the user's age, gender, current conditions, medications, and other factors when analyzing their data and providing recommendations.`
 
     // Stream the response
+    // Enable tools for all models (including Ollama with native API + simulateStreaming)
     const result = streamText({
       model: selectedModel,
       system: systemPrompt,
