@@ -174,15 +174,19 @@ export function ChatInterfaceWithHistory() {
     // Track chat message analytics
     Analytics.chatMessage(selectedModel)
     
-    // Submit the message immediately - the API will create the conversation if needed
-    handleSubmit(e)
-    
-    // If no current conversation, refresh after a short delay to pick up the new one
+    // If no current conversation, create one FIRST before submitting the message
     if (!currentConversation) {
-      setTimeout(() => {
-        refreshConversations()
-      }, 1000)
+      const newConv = await createNewConversation()
+      if (!newConv) {
+        console.error('Failed to create conversation')
+        return
+      }
+      // Wait a brief moment for the state to update
+      await new Promise(resolve => setTimeout(resolve, 100))
     }
+    
+    // Submit the message
+    handleSubmit(e)
   }
 
   const hasMessages = messages.length > 0
