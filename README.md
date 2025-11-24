@@ -2,7 +2,7 @@
 
 # OpenMed AI - Open Source Medical Data Analysis Platform
 
-OpenMed AI is an open-source platform designed to **democratize health data analysis** by giving individuals the power to understand their own medical data through AI-powered insights. Upload your blood work, genetic testing results, and get personalized health insights through natural language conversations. Check out the [Live Demo](https://openmed.app)
+OpenMed AI is an open-source platform designed to **democratize health data analysis** by giving individuals the power to understand their own medical data through AI-powered insights. Upload your blood work, genetic testing results, and get personalized health insights through natural language conversations. Open med can also run 100% locally including local LLM support for complete data privacy! Check out the [Live Demo](https://openmed.app)
 
 ## 🌟 Mission
 
