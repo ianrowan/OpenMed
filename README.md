@@ -1,6 +1,6 @@
 # OpenMed AI - Open Source Medical Data Analysis Platform
 
-OpenMed AI is an open-source platform designed to **democratize health data analysis** by giving individuals the power to understand their own medical data through AI-powered insights. Upload your blood work, genetic testing results, and get personalized health insights through natural language conversations.
+OpenMed AI is an open-source platform designed to **democratize health data analysis** by giving individuals the power to understand their own medical data through AI-powered insights. Upload your blood work, genetic testing results, and get personalized health insights through natural language conversations. Check out the [Live Demo](https://openmed.app)
 
 ## 🌟 Mission
 
@@ -50,7 +50,7 @@ Healthcare data should be accessible and understandable to everyone. OpenMed AI 
 - Demo mode with sample data
 - Conversation history and management
 - Medical profile integration
-- Multi-model AI support (GPT-4, GPT-5 variants)
+- Multi-model AI support (GPT-4, GPT-5 variants, local Ollama)
 
 ## 🛠 Tech Stack
 
@@ -58,7 +58,7 @@ Healthcare data should be accessible and understandable to everyone. OpenMed AI 
 - **UI Components**: shadcn/ui, Radix UI primitives
 - **Backend**: Next.js API routes with serverless functions
 - **Database**: Supabase (PostgreSQL) with Row Level Security
-- **AI/ML**: OpenAI GPT models (GPT-4, GPT-4 Turbo, GPT-o1)
+- **AI/ML**: OpenAI GPT models (GPT-4, GPT-4 Turbo, GPT-o1), Local Ollama models
 - **Authentication**: Supabase Auth with social providers
 - **File Processing**: PDF parsing, CSV processing, genetic data formats
 - **Deployment**: Vercel (recommended) with Supabase cloud integration
